@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_17_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_17_000002) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "notey_preferences", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.json "channels", default: [], null: false
+    t.datetime "created_at", null: false
+    t.integer "member_id", null: false
+    t.string "member_type", null: false
+    t.string "notification_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["member_type", "member_id", "account_id", "notification_type"], name: "index_notey_preferences_unique", unique: true
+    t.index ["member_type", "member_id"], name: "index_notey_preferences_on_member"
   end
 end
