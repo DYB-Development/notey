@@ -19,6 +19,10 @@ module Notey
       @notifications
     end
 
+    def channels
+      @notifications.values.flat_map(&:channels).uniq
+    end
+
     def declared?(notification_type)
       @notifications.key?(notification_type.to_s)
     end

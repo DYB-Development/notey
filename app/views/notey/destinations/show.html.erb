@@ -1,0 +1,15 @@
+<%= ui_page(max_width: :lg) do %>
+  <%= ui_section(title: "Destinations") do %>
+    <%= ui_form(action: destinations_path, method: :patch) do %>
+      <% @channels.each do |channel| %>
+        <% destination = Notey::Destinations.for(Notey::Current.account_id, channel) %>
+        <%= ui_panel do %>
+          <h3><%= channel.humanize %></h3>
+          <%= ui_input(name: "destinations[#{channel}][address]", value: destination&.address) %>
+          <%= ui_input(name: "destinations[#{channel}][credential]", type: :password) %>
+        <% end %>
+      <% end %>
+      <%= ui_button(label: "Save") %>
+    <% end %>
+  <% end %>
+<% end %>
