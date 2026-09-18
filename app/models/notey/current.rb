@@ -2,6 +2,6 @@
 
 module Notey
   class Current < ActiveSupport::CurrentAttributes
-    attribute :account_id
+    attribute :account_id, :member
   end
 end

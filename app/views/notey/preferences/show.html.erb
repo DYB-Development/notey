@@ -1,0 +1,21 @@
+<%= ui_page(max_width: :lg) do %>
+  <%= ui_section(title: "Notifications") do %>
+    <%= ui_form(action: preferences_path, method: :patch) do %>
+      <% @notifications.each do |name, notification| %>
+        <%= ui_panel do %>
+          <h3><%= name.humanize %></h3>
+          <% notification.channels.each do |channel| %>
+            <label>
+              <input type="checkbox"
+                     name="preferences[<%= name %>][]"
+                     value="<%= channel %>"
+                     <%= "checked" if Notey::Current.member.channels_for(name).include?(channel) %>>
+              <%= channel.humanize %>
+            </label>
+          <% end %>
+        <% end %>
+      <% end %>
+      <%= ui_button(label: "Save") %>
+    <% end %>
+  <% end %>
+<% end %>

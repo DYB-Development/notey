@@ -1,4 +1,5 @@
 require "noticed"
+require "keystone_ui"
 
 module Notey
   class Engine < ::Rails::Engine
