@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
-require "event_engine"
-require "event_engine/subscribers"
-
 module Notey
-  class EventSubscriber < EventEngine::Subscribers::Base
-    def handle(event)
+  class EventDelivery
+    def self.call(event)
       notifier = Notey.notifier_for(event.event_name)
       return if notifier.nil?
 

@@ -16,4 +16,6 @@ group :development, :test do
   gem "minitest", "~> 5.0"
 
   gem "json", "< 3"
+
+  gem "event_engine-subscribers", ">= 0.1"
 end

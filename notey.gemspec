@@ -31,5 +31,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", ">= 7.1"
   spec.add_dependency "noticed", ">= 3.0"
   spec.add_dependency "keystone_ui", ">= 0.9"
-  spec.add_dependency "event_engine-subscribers", ">= 0.1"
 end
