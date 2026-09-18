@@ -24,7 +24,10 @@ module Notey
     def store(channel, attributes)
       destination = Destination.find_or_initialize_by(account_id: Current.account_id, channel: channel.to_s)
 
-      destination.update(address: attributes["address"], credential: attributes["credential"])
+      changes = { address: attributes["address"] }
+      changes[:credential] = attributes["credential"] if attributes["credential"].present?
+
+      destination.update(changes)
     end
   end
 end

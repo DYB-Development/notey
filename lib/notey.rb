@@ -105,5 +105,6 @@ module Notey
   def self.reset!
     @catalog = nil
     @event_notifiers = nil
+    forget_notifiers
   end
 end

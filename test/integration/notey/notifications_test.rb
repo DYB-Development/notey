@@ -43,6 +43,16 @@ module Notey
       count
     end
 
+    test "refuses to mark read a notification held in another account" do
+      member = Member.create!
+      notify(member, account_id: 8)
+
+      patch "/notey/notifications/#{Noticed::Notification.last.id}",
+        headers: headers_for(member, account_id: 7)
+
+      assert Noticed::Notification.last.unread?
+    end
+
     test "lists at most one page of notifications" do
       member = Member.create!
       (Notey::NotificationsController::PER_PAGE + 1).times { notify(member) }

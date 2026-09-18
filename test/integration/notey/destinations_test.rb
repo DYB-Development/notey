@@ -23,6 +23,18 @@ module Notey
       assert_equal "https://x.example.com", Destination.last.address
     end
 
+    test "keeps a stored credential when the box is left empty" do
+      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+      Destination.create!(account_id: 7, channel: "recording",
+        address: "https://x.example.com", credential: "sekrit")
+
+      patch "/notey/destinations",
+        params: { destinations: { recording: { address: "https://x.example.com", credential: "" } } },
+        headers: headers_for(Member.create!)
+
+      assert_equal "sekrit", Destination.last.credential
+    end
+
     test "ignores a channel the catalog does not offer" do
       Notey.catalog { notification :comment, channels: %w[recording], default: [] }
 
