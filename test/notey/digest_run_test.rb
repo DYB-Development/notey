@@ -60,6 +60,57 @@ module Notey
       assert_equal 2, Digest.last.notifications_count
     end
 
+    test "sends one email when the run happens twice for the same window" do
+      member = member_with_daily_comment
+      notify(member, 2)
+
+      DigestRun.new(window: "daily").call
+
+      assert_emails 0 do
+        DigestRun.new(window: "daily").call
+      end
+    end
+
+    test "leaves the window unsent when the run fails before sending" do
+      member = member_with_daily_comment
+      notify(member, 1)
+
+      DigestMailer.stub(:digest, ->(*) { raise "mail is down" }) do
+        assert_raises(RuntimeError) { DigestRun.new(window: "daily").call }
+      end
+
+      assert_nil Digest.last.sent_at
+    end
+
+    test "does not send the window again when the run fails after sending" do
+      member = member_with_daily_comment
+      notify(member, 1)
+      DigestRun.new(window: "daily").call
+
+      assert_emails 0 do
+        DigestRun.new(window: "daily").call
+      end
+    end
+
+    test "sends one email when a second run starts while the first is sending" do
+      member = member_with_daily_comment
+      notify(member, 1)
+      original = DigestMailer.method(:digest)
+      overlapped = false
+
+      assert_emails 1 do
+        DigestMailer.stub(:digest, lambda { |*args|
+          unless overlapped
+            overlapped = true
+            DigestRun.new(window: "daily").call
+          end
+          original.call(*args)
+        }) do
+          DigestRun.new(window: "daily").call
+        end
+      end
+    end
+
     test "records the window the digest covered" do
       member = member_with_daily_comment
       notify(member, 1)
