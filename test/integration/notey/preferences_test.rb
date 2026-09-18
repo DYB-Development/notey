@@ -9,17 +9,30 @@ module Notey
       Notey.reset!
     end
 
+    def headers_for(member, account_id: 7)
+      { "X-Member-Id" => member.id.to_s, "X-Account-Id" => account_id.to_s }
+    end
+
     test "lists every notification type the app declares" do
       Notey.catalog do
         notification :comment, channels: %w[email], default: %w[email]
         notification :mention, channels: %w[email], default: []
       end
-      Current.member = Member.create!
-      Current.account_id = 7
+      member = Member.create!
 
-      get "/notey/preferences"
+      get "/notey/preferences", headers: headers_for(member)
 
       assert_select "body", text: /Mention/
+    end
+
+    test "keeps a channel choice after a reload" do
+      Notey.catalog { notification :comment, channels: %w[email sms], default: %w[email] }
+      member = Member.create!
+
+      patch "/notey/preferences", params: { preferences: { comment: %w[sms] } }, headers: headers_for(member)
+      get "/notey/preferences", headers: headers_for(member)
+
+      assert_select "input[type=checkbox][value=sms][checked]"
     end
   end
 end
