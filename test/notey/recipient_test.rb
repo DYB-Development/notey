@@ -46,5 +46,23 @@ module Notey
 
       assert_equal "immediate", Member.create!.digest_window_for("comment")
     end
+
+    test "reads channels through the one resolver" do
+      member = Member.create!
+      Current.account_id = 7
+
+      Channels.stub(:for, ->(*, **) { %w[carrier-pigeon] }) do
+        assert_equal %w[carrier-pigeon], member.channels_for("comment")
+      end
+    end
+
+    test "reads the window through the one resolver" do
+      member = Member.create!
+      Current.account_id = 7
+
+      Channels.stub(:window_for, ->(*, **) { "fortnightly" }) do
+        assert_equal "fortnightly", member.digest_window_for("comment")
+      end
+    end
   end
 end
