@@ -10,6 +10,7 @@ module Notey
     end
 
     test "reports a channel the person stored for the account they are in" do
+      Notey.catalog { notification :comment, channels: %w[email], default: [] }
       member = Member.create!
       Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[email])
       Current.account_id = 7
@@ -18,6 +19,7 @@ module Notey
     end
 
     test "holds different channels for the same person in two accounts" do
+      Notey.catalog { notification :comment, channels: %w[email sms], default: [] }
       member = Member.create!
       Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[email])
       Preference.create!(member: member, account_id: 8, notification_type: "comment", channels: %w[sms])
@@ -45,6 +47,15 @@ module Notey
       Current.account_id = 7
 
       assert_equal "immediate", Member.create!.digest_window_for("comment")
+    end
+
+    test "ignores a stored preference for a type the catalog no longer holds" do
+      Notey.catalog { notification :comment, channels: %w[email], default: %w[email] }
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "retired", channels: %w[email])
+      Current.account_id = 7
+
+      assert_empty member.channels_for("retired")
     end
 
     test "reads channels through the one resolver" do
