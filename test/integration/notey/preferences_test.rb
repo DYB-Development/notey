@@ -34,5 +34,15 @@ module Notey
 
       assert_select "input[type=checkbox][value=sms][checked]"
     end
+
+    test "shows choices for the account the person is in and not another" do
+      Notey.catalog { notification :comment, channels: %w[email sms], default: [] }
+      member = Member.create!
+
+      patch "/notey/preferences", params: { preferences: { comment: %w[sms] } }, headers: headers_for(member, account_id: 7)
+      get "/notey/preferences", headers: headers_for(member, account_id: 8)
+
+      assert_select "input[type=checkbox][value=sms][checked]", false
+    end
   end
 end
