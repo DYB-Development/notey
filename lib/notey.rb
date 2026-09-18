@@ -32,6 +32,10 @@ module Notey
     @notifiers ||= []
   end
 
+  def self.forget_notifiers
+    @notifiers = []
+  end
+
   def self.check!
     return if catalog.notifications.empty?
 

@@ -25,6 +25,17 @@ module Notey
       assert_nothing_raised { Notey.check! }
     end
 
+    test "forgets the notifiers it registered" do
+      registered = Notey.notifiers.dup
+      Class.new(Noticed::Event) { include Notey::Notifier }
+
+      Notey.forget_notifiers
+
+      assert_empty Notey.notifiers
+    ensure
+      registered.each { |notifier| Notey.register_notifier(notifier) }
+    end
+
     test "refuses a catalog with no sender address for its digests" do
       Rails.application.eager_load!
       Notey.catalog do
