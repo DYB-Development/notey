@@ -11,7 +11,11 @@ module Notey
 
     def call
       preferences.group_by { |preference| [ preference.member, preference.account_id ] }
-                 .filter_map { |(member, account_id), grouped| deliver_to(member, account_id, grouped) }
+                 .each { |(member, account_id), _| DigestJob.perform_later(member, account_id, window) }
+    end
+
+    def deliver_to_member(member, account_id)
+      deliver_to(member, account_id, preferences.where(member: member, account_id: account_id))
     end
 
     private
