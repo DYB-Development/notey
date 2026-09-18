@@ -71,7 +71,7 @@ module Notey
       end
     end
 
-    test "leaves the window unsent when the run fails before sending" do
+    test "releases the window when the send fails so it can be sent again" do
       member = member_with_daily_comment
       notify(member, 1)
 
@@ -79,7 +79,7 @@ module Notey
         assert_raises(RuntimeError) { DigestRun.new(window: "daily").call }
       end
 
-      assert_nil Digest.last.sent_at
+      assert_nil Digest.last
     end
 
     test "does not send the window again when the run fails after sending" do

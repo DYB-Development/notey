@@ -29,8 +29,15 @@ module Notey
       digest = claim(member, account_id)
       return if digest.nil?
 
+      send_digest(digest, member, notifications)
+    end
+
+    def send_digest(digest, member, notifications)
       DigestMailer.digest(member, notifications, window).deliver_now
       digest.update!(notifications_count: notifications.size, sent_at: Time.current)
+    rescue StandardError
+      digest.destroy
+      raise
     end
 
     def claim(member, account_id)
