@@ -81,10 +81,9 @@ module Notey
 
   def self.wanted(notification_type, on:)
     lambda do
-      account_id = event.account_id
+      decision = Channels.decision_for(recipient, notification_type, account_id: event.account_id)
 
-      recipient.digest_window_for(notification_type, account_id: account_id) == "immediate" &&
-        recipient.wants?(notification_type, on: on, account_id: account_id)
+      decision.window == "immediate" && decision.channels.include?(on.to_s)
     end
   end
 

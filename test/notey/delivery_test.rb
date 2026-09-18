@@ -13,6 +13,25 @@ module Notey
       Notey.reset!
     end
 
+    def preference_queries(&block)
+      count = 0
+      counter = ->(*, payload) { count += 1 if payload[:sql].to_s.include?("notey_preferences") }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
+      count
+    end
+
+    test "reads a person's preference once for a delivery" do
+      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment",
+        channels: %w[test], digest_window: "immediate")
+      Current.account_id = 7
+
+      queries = preference_queries { perform_enqueued_jobs { CommentNotifier.deliver(member) } }
+
+      assert_equal 1, queries
+    end
+
     test "does not deliver on a channel the recipient turned off" do
       Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
       member = Member.create!
