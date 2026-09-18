@@ -14,7 +14,9 @@ module Notey
 
     def channels_for(notification_type)
       stored = notey_preferences.find_by(account_id: Current.account_id, notification_type: notification_type.to_s)
-      Array(stored&.channels).map(&:to_s)
+      return Notey.catalog.default_channels_for(notification_type) if stored.nil?
+
+      Array(stored.channels).map(&:to_s)
     end
   end
 end

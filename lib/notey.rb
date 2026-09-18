@@ -1,6 +1,15 @@
 require "notey/version"
 require "notey/engine"
+require "notey/catalog"
 
 module Notey
-  # Your code goes here...
+  def self.catalog(&block)
+    @catalog ||= Catalog.new
+    @catalog.instance_eval(&block) if block
+    @catalog
+  end
+
+  def self.reset!
+    @catalog = nil
+  end
 end
