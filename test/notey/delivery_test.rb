@@ -34,5 +34,16 @@ module Notey
 
       assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
     end
+
+    test "writes the in-app record even when no channel is wanted" do
+      Notey.catalog { notification :comment, channels: %w[test], default: [] }
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: [])
+      Current.account_id = 7
+
+      perform_enqueued_jobs { CommentNotifier.deliver(member) }
+
+      assert_equal 1, Noticed::Notification.where(recipient: member).count
+    end
   end
 end
