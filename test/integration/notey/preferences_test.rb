@@ -82,5 +82,15 @@ module Notey
 
       assert_nil Preference.last
     end
+
+    test "shows the page again when a preference does not save" do
+      Notey.catalog { notification :comment, channels: %w[email], default: [] }
+
+      patch "/notey/preferences",
+        params: { preferences: { comment: %w[email] }, windows: { comment: "fortnightly" } },
+        headers: headers_for(Member.create!)
+
+      assert_response :unprocessable_content
+    end
   end
 end
