@@ -13,7 +13,7 @@ group :development, :test do
   gem "sqlite3"
   gem "propshaft"
   gem "pry"
-  gem "minitest", "~> 5.0"
+  gem "minitest", "~> 6.0"
 
   gem "json", "< 3"
 
