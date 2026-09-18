@@ -24,7 +24,7 @@ module Notey
         account_id: Current.account_id,
         notification_type: notification_type.to_s
       )
-      preference.update!(channels: Array(channels).map(&:to_s))
+      preference.update(channels: Array(channels).map(&:to_s))
     end
   end
 end

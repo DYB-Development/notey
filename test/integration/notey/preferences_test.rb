@@ -52,5 +52,14 @@ module Notey
 
       assert_select "input[type=checkbox][value=email][checked]"
     end
+
+    test "refuses a channel the catalog does not offer for that type" do
+      Notey.catalog { notification :comment, channels: %w[email], default: [] }
+      member = Member.create!
+
+      patch "/notey/preferences", params: { preferences: { comment: %w[sms] } }, headers: headers_for(member)
+
+      assert_empty Preference.last&.channels || []
+    end
   end
 end

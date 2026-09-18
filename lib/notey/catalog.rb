@@ -19,6 +19,10 @@ module Notey
       @notifications
     end
 
+    def declared?(notification_type)
+      @notifications.key?(notification_type.to_s)
+    end
+
     def channels_for(notification_type)
       declared(notification_type)&.channels || []
     end
