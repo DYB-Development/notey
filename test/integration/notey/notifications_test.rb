@@ -5,6 +5,7 @@ require "test_helper"
 module Notey
   class NotificationsTest < ActionDispatch::IntegrationTest
     include ActiveJob::TestHelper
+    include ActiveRecord::Assertions::QueryAssertions
 
     teardown do
       Current.reset
@@ -20,6 +21,26 @@ module Notey
       Current.account_id = account_id
       perform_enqueued_jobs { CommentNotifier.deliver(member) }
       Current.reset
+    end
+
+    test "does not query more as the list grows" do
+      member = Member.create!
+      3.times { notify(member) }
+      get "/notey/notifications", headers: headers_for(member)
+      baseline = count_queries { get "/notey/notifications", headers: headers_for(member) }
+
+      3.times { notify(member) }
+
+      assert_queries_count baseline do
+        get "/notey/notifications", headers: headers_for(member)
+      end
+    end
+
+    def count_queries(&block)
+      count = 0
+      counter = ->(*, payload) { count += 1 unless payload[:name].in?(%w[SCHEMA TRANSACTION]) }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
+      count
     end
 
     test "lists the notifications addressed to a person in the account they are in" do

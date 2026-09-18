@@ -3,7 +3,7 @@
 module Notey
   class NotificationsController < ApplicationController
     def index
-      @notifications = inbox.order(created_at: :desc)
+      @notifications = inbox.includes(:event).order(created_at: :desc)
       @unread_count = inbox.unread.count
 
       inbox.unseen.mark_as_seen
