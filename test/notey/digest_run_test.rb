@@ -60,6 +60,24 @@ module Notey
       assert_equal 2, Digest.last.notifications_count
     end
 
+    test "records the window the digest covered" do
+      member = member_with_daily_comment
+      notify(member, 1)
+
+      DigestRun.new(window: "daily").call
+
+      assert_equal "daily", Digest.last.digest_window
+    end
+
+    test "records when the digest was sent" do
+      member = member_with_daily_comment
+      notify(member, 1)
+
+      DigestRun.new(window: "daily").call
+
+      assert_not_nil Digest.last.sent_at
+    end
+
     test "leaves out a notification the person set to immediate" do
       member = member_with_daily_comment
       Notey.catalog { notification :mention, channels: %w[test], default: %w[test] }
