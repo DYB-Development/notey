@@ -184,6 +184,18 @@ module Notey
       end
     end
 
+    test "sends a weekly window as one email" do
+      Notey.catalog { notification :comment, channels: %w[email], default: [] }
+      member = Member.create!(email: "person@example.com")
+      Preference.create!(member: member, account_id: 7, notification_type: "comment",
+        channels: %w[email], digest_window: "weekly")
+      notify(member, 2)
+
+      assert_emails 1 do
+        perform_enqueued_jobs { DigestRun.new(window: "weekly").call }
+      end
+    end
+
     test "records the window the digest covered" do
       member = member_with_daily_comment
       notify(member, 1)
