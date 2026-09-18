@@ -25,7 +25,7 @@ module Notey
       Current.account_id = 99
 
       perform_enqueued_jobs do
-        EventSubscriber.new.handle(Event.new(event_name: :thing_happened,
+        EventDelivery.call(Event.new(event_name: :thing_happened,
           payload: { account_id: 7, member_ids: [] }))
       end
 
@@ -38,7 +38,7 @@ module Notey
       Notey.deliver_on :thing_happened, ThingHappenedNotifier
 
       perform_enqueued_jobs do
-        EventSubscriber.new.handle(Event.new(event_name: :thing_happened,
+        EventDelivery.call(Event.new(event_name: :thing_happened,
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
@@ -51,7 +51,7 @@ module Notey
       Notey.deliver_on :thing_happened, ThingHappenedNotifier
 
       perform_enqueued_jobs do
-        EventSubscriber.new.handle(Event.new(event_name: :thing_happened,
+        EventDelivery.call(Event.new(event_name: :thing_happened,
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
@@ -63,7 +63,7 @@ module Notey
       member = Member.create!
 
       perform_enqueued_jobs do
-        EventSubscriber.new.handle(Event.new(event_name: :nobody_mapped_this,
+        EventDelivery.call(Event.new(event_name: :nobody_mapped_this,
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
@@ -77,7 +77,7 @@ module Notey
       Notey.deliver_on :thing_happened, ThingHappenedNotifier
 
       perform_enqueued_jobs do
-        EventSubscriber.new.handle(Event.new(event_name: :thing_happened,
+        EventDelivery.call(Event.new(event_name: :thing_happened,
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 

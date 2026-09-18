@@ -4,7 +4,6 @@ require "notey/catalog"
 require "notey/channels"
 require "notey/destinations"
 require "notey/event_delivery"
-require "notey/event_subscriber"
 require "notey/inbox"
 require "notey/digest_run"
 
@@ -63,7 +62,6 @@ module Notey
 
   def self.deliver_on(event_name, notifier)
     event_notifiers[event_name.to_s] = notifier
-    EventSubscriber.subscribes_to(event_name)
   end
 
   def self.notifier_for(event_name)
