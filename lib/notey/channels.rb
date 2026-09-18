@@ -23,6 +23,10 @@ module Notey
       decision_for(member, notification_type, account_id: account_id).window
     end
 
+    def self.window_of(preference)
+      preference.digest_window || "immediate"
+    end
+
     def self.stored_for(member, notification_type, account_id)
       member.notey_preferences.find_by(account_id: account_id, notification_type: notification_type.to_s)
     end

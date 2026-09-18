@@ -27,7 +27,7 @@ module Notey
     end
 
     def deliver_to(member, account_id, grouped)
-      notifications = gathered(member, account_id, types_in_window(member, account_id, grouped))
+      notifications = gathered(member, account_id, types_in_window(grouped))
       return if notifications.empty?
 
       digest = claim(member, account_id)
@@ -50,10 +50,9 @@ module Notey
       nil
     end
 
-    def types_in_window(member, account_id, grouped)
-      grouped.map(&:notification_type).select do |notification_type|
-        Channels.window_for(member, notification_type, account_id: account_id) == window
-      end
+    def types_in_window(grouped)
+      grouped.select { |preference| Channels.window_of(preference) == window }
+             .map(&:notification_type)
     end
 
     def gathered(member, account_id, notification_types)
