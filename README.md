@@ -142,6 +142,29 @@ Notey.notification_url = lambda do |notification|
 end
 ```
 
+## Settings sections
+
+Notey ships its two pages as partials and their saving as action objects, so a
+settings shell renders them inside its own chrome rather than linking away.
+With [`bureau`](https://github.com/DYB-Development/bureau):
+
+```ruby
+# config/initializers/bureau.rb
+Bureau.section :notifications, area: :user, title: "Notifications",
+  renders: "notey/preferences", runs: "Notey::SavePreferences"
+
+Bureau.section :notification_destinations, area: :account, title: "Notification destinations",
+  renders: "notey/destinations", runs: "Notey::SaveDestination", capability: :configure_site
+```
+
+A section registered this way is served by the settings shell, so the shell's
+own capability check guards it. A section that only links to a mounted path is
+not guarded, because the shell never renders it.
+
+`Notey::SavePreferences` and `Notey::SaveDestination` take `person:`, `account:`
+and `values:`, and answer with an object responding to `ok?` and `message`. The
+engine's own pages call the same two actions.
+
 ## Sending digests
 
 A type set to daily or weekly sends nothing when it happens. Run the window on a
