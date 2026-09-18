@@ -8,6 +8,7 @@ module Notey
 
     test "names the type and the notifier when a notifier names a type the catalog does not hold" do
       Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
+      MentionNotifier
 
       error = assert_raises(Notey::UndeclaredType) { Notey.check! }
 
