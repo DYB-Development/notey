@@ -14,5 +14,17 @@ module Notey
 
       assert_match(/MentionNotifier.*mention/, error.message)
     end
+
+    test "refuses a catalog channel nothing delivers on" do
+      Notey.catalog do
+        notification :comment, channels: %w[test carrier-pigeon], default: %w[test]
+        notification :mention, channels: %w[test], default: %w[test]
+      end
+      MentionNotifier
+
+      error = assert_raises(Notey::UndeliverableChannel) { Notey.check! }
+
+      assert_match(/carrier-pigeon/, error.message)
+    end
   end
 end

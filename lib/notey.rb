@@ -9,6 +9,7 @@ require "notey/digest_run"
 
 module Notey
   class UndeclaredType < StandardError; end
+  class UndeliverableChannel < StandardError; end
 
   class << self
     attr_writer :notification_url
@@ -27,6 +28,19 @@ module Notey
   end
 
   def self.check!
+    check_declared_types!
+    check_deliverable_channels!
+  end
+
+  def self.check_deliverable_channels!
+    delivered = notifiers.flat_map { |notifier| notifier.delivery_methods.keys.map(&:to_s) }.uniq
+
+    (catalog.channels - delivered).each do |channel|
+      raise UndeliverableChannel, "the catalog offers the channel #{channel}, which no notifier delivers on"
+    end
+  end
+
+  def self.check_declared_types!
     notifiers.each do |notifier|
       notification_type = notifier.notey_notification_type
       next if notification_type.nil? || catalog.declared?(notification_type)
