@@ -8,12 +8,48 @@ require "notey/inbox"
 require "notey/digest_run"
 
 module Notey
+  class UndeclaredType < StandardError; end
+  class UndeliverableChannel < StandardError; end
+
   class << self
     attr_writer :notification_url
   end
 
   def self.notification_url
     @notification_url || ->(notification) { nil }
+  end
+
+  def self.register_notifier(notifier)
+    notifiers << notifier unless notifiers.include?(notifier)
+  end
+
+  def self.notifiers
+    @notifiers ||= []
+  end
+
+  def self.check!
+    return if catalog.notifications.empty?
+
+    check_declared_types!
+    check_deliverable_channels!
+  end
+
+  def self.check_deliverable_channels!
+    delivered = notifiers.flat_map { |notifier| notifier.delivery_methods.keys.map(&:to_s) }.uniq
+
+    (catalog.channels - delivered).each do |channel|
+      raise UndeliverableChannel, "the catalog offers the channel #{channel}, which no notifier delivers on"
+    end
+  end
+
+  def self.check_declared_types!
+    notifiers.each do |notifier|
+      notification_type = notifier.notey_notification_type
+      next if notification_type.nil? || catalog.declared?(notification_type)
+
+      raise UndeclaredType,
+        "#{notifier} declares the notification type #{notification_type}, which the catalog does not hold"
+    end
   end
 
   def self.destination_address(channel)

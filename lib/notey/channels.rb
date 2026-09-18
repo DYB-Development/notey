@@ -3,6 +3,8 @@
 module Notey
   class Channels
     def self.for(member, notification_type, account_id:)
+      return [] unless Notey.catalog.declared?(notification_type)
+
       stored = stored_for(member, notification_type, account_id)
       return Notey.catalog.default_channels_for(notification_type) if stored.nil?
 

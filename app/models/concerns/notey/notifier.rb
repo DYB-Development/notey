@@ -6,6 +6,8 @@ module Notey
 
     included do
       class_attribute :notey_notification_type, instance_writer: false
+
+      Notey.register_notifier(self)
     end
 
     class_methods do
