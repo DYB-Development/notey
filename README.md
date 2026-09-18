@@ -178,15 +178,28 @@ nothing on it.
 
 ## Domain events
 
-With [`event_engine`](https://github.com/DYB-Development/event_engine) and
-`event_engine-subscribers` installed, map an event to a notifier:
+Notey does not depend on any event pipeline. It holds the mapping from an event
+name to a notifier, and your app owns the one class that knows both.
 
 ```ruby
+# config/initializers/notey.rb
 Notey.deliver_on :comment_posted, CommentNotifier
 ```
 
-The subscriber sets the account from the event's payload, delivers the notifier,
-and restores the account it found. An event with no mapping does nothing.
+```ruby
+# app/subscribers/notey_notifications.rb
+class NoteyNotifications < EventEngine::Subscribers::Base
+  subscribes_to :comment_posted
+
+  def handle(event)
+    Notey::EventDelivery.call(event)
+  end
+end
+```
+
+`Notey::EventDelivery.call` takes anything answering `event_name` and `payload`,
+sets the account from the payload for the delivery, and restores the account it
+found. An event with no mapping does nothing.
 
 ## Development
 
