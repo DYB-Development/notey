@@ -9,6 +9,10 @@ module Notey
     @catalog
   end
 
+  def self.wanted(notification_type, on:)
+    -> { recipient.wants?(notification_type, on: on, account_id: event.account_id) }
+  end
+
   def self.reset!
     @catalog = nil
   end
