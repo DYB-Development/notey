@@ -12,4 +12,6 @@ group :development, :test do
   gem "propshaft"
   gem "pry"
   gem "minitest", "~> 5.0"
+
+  gem "json", "< 3"
 end
