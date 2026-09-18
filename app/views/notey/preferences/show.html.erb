@@ -9,7 +9,7 @@
               <input type="checkbox"
                      name="preferences[<%= name %>][]"
                      value="<%= channel %>"
-                     <%= "checked" if chosen_channels(@stored[name], name).include?(channel) %>>
+                     <%= "checked" if Notey::Channels.channels_of(@stored[name], name).include?(channel) %>>
               <%= channel.humanize %>
             </label>
           <% end %>

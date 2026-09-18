@@ -5,7 +5,6 @@ require "test_helper"
 module Notey
   class PreferencesPartialTest < ActionView::TestCase
     helper KeystoneUiHelper
-    helper Notey::ApplicationHelper
 
     teardown { Notey.reset! }
 
