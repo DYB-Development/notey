@@ -71,6 +71,27 @@ module Notey
       end
     end
 
+    test "leaves the window unsent when the run fails before sending" do
+      member = member_with_daily_comment
+      notify(member, 1)
+
+      DigestMailer.stub(:digest, ->(*) { raise "mail is down" }) do
+        assert_raises(RuntimeError) { DigestRun.new(window: "daily").call }
+      end
+
+      assert_nil Digest.last.sent_at
+    end
+
+    test "does not send the window again when the run fails after sending" do
+      member = member_with_daily_comment
+      notify(member, 1)
+      DigestRun.new(window: "daily").call
+
+      assert_emails 0 do
+        DigestRun.new(window: "daily").call
+      end
+    end
+
     test "records the window the digest covered" do
       member = member_with_daily_comment
       notify(member, 1)
