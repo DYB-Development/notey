@@ -41,5 +41,14 @@ module Notey
         DigestRun.new(window: "daily").call
       end
     end
+
+    test "lists each notification in the window with a link to it" do
+      member = member_with_daily_comment
+      notify(member, 2)
+
+      DigestRun.new(window: "daily").call
+
+      assert_equal 2, ActionMailer::Base.deliveries.last.body.to_s.scan("/notifications/").size
+    end
   end
 end
