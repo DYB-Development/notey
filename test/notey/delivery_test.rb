@@ -45,5 +45,14 @@ module Notey
 
       assert_equal 1, Noticed::Notification.where(recipient: member).count
     end
+
+    test "delivers on the declared default when nobody set a preference" do
+      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
+      Current.account_id = 7
+
+      perform_enqueued_jobs { CommentNotifier.deliver(Member.create!) }
+
+      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
+    end
   end
 end
