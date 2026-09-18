@@ -10,11 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_040001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_050001) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "notey_destinations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "address", null: false
+    t.string "channel", null: false
+    t.datetime "created_at", null: false
+    t.text "credential"
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "channel"], name: "index_notey_destinations_on_account_id_and_channel", unique: true
   end
 
   create_table "notey_digests", force: :cascade do |t|
