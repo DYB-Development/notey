@@ -1,0 +1,24 @@
+<% stored = Notey::Preference.where(member: person, account_id: account).index_by(&:notification_type) %>
+
+<%= ui_form(action: submit_url, method: :patch) do %>
+  <% Notey.catalog.notifications.each do |name, notification| %>
+    <%= ui_panel do %>
+      <h3><%= name.humanize %></h3>
+      <% notification.channels.each do |channel| %>
+        <label>
+          <input type="checkbox"
+                 name="preferences[<%= name %>][]"
+                 value="<%= channel %>"
+                 <%= "checked" if chosen_channels(stored[name], name).include?(channel) %>>
+          <%= channel.humanize %>
+        </label>
+      <% end %>
+      <%= ui_select(
+            name: "windows[#{name}]",
+            options: [ [ "Immediately", "immediate" ], [ "Once a day", "daily" ], [ "Once a week", "weekly" ] ],
+            selected: stored[name]&.digest_window || "immediate"
+          ) %>
+    <% end %>
+  <% end %>
+  <%= ui_button(label: "Save") %>
+<% end %>

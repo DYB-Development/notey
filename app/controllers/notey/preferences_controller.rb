@@ -9,9 +9,9 @@ module Notey
     end
 
     def update
-      saved = chosen.map { |notification_type, channels| store(notification_type, channels) }
+      result = SavePreferences.new(person: Current.member, account: Current.account_id, values: submitted).call
 
-      return redirect_to preferences_path if saved.all?
+      return redirect_to preferences_path if result.ok?
 
       show
       render :show, status: :unprocessable_content
@@ -19,24 +19,11 @@ module Notey
 
     private
 
-    def chosen
-      params.fetch(:preferences, {}).permit!.to_h.select { |type, _| Notey.catalog.declared?(type) }
-    end
-
-    def windows
-      params.fetch(:windows, {}).permit!.to_h
-    end
-
-    def store(notification_type, channels)
-      preference = Preference.find_or_initialize_by(
-        member: Current.member,
-        account_id: Current.account_id,
-        notification_type: notification_type.to_s
-      )
-      preference.update(
-        channels: Array(channels).map(&:to_s),
-        digest_window: windows.fetch(notification_type.to_s, "immediate")
-      )
+    def submitted
+      {
+        preferences: params.fetch(:preferences, {}).permit!.to_h,
+        windows: params.fetch(:windows, {}).permit!.to_h
+      }
     end
   end
 end
