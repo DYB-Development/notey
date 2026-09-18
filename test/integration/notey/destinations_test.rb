@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module Notey
+  class DestinationsTest < ActionDispatch::IntegrationTest
+    teardown do
+      Current.reset
+      Notey.reset!
+    end
+
+    def headers_for(member, account_id: 7)
+      { "X-Member-Id" => member.id.to_s, "X-Account-Id" => account_id.to_s }
+    end
+
+    test "keeps an address an administrator set for a channel" do
+      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+
+      patch "/notey/destinations",
+        params: { destinations: { recording: { address: "https://x.example.com", credential: "sekrit" } } },
+        headers: headers_for(Member.create!)
+
+      assert_equal "https://x.example.com", Destination.last.address
+    end
+  end
+end
