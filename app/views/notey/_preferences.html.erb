@@ -3,21 +3,21 @@
 <%= ui_form(action: submit_url, method: :patch) do %>
   <% Notey.catalog.notifications.each do |name, notification| %>
     <%= ui_panel do %>
-      <h3><%= name.humanize %></h3>
-      <% notification.channels.each do |channel| %>
-        <label>
-          <input type="checkbox"
-                 name="preferences[<%= name %>][]"
-                 value="<%= channel %>"
-                 <%= "checked" if Notey::Channels.channels_of(stored[name], name).include?(channel) %>>
-          <%= channel.humanize %>
-        </label>
-      <% end %>
+      <%= ui_section(title: name.humanize) do %>
+        <% notification.channels.each do |channel| %>
+          <%= ui_checkbox_row(
+                name: "preferences[#{name}][]",
+                value: channel,
+                label: channel.humanize,
+                checked: Notey::Channels.channels_of(stored[name], name).include?(channel)
+              ) %>
+        <% end %>
       <%= ui_select(
             name: "windows[#{name}]",
             options: [ [ "Immediately", "immediate" ], [ "Once a day", "daily" ], [ "Once a week", "weekly" ] ],
             selected: stored[name]&.digest_window || "immediate"
           ) %>
+      <% end %>
     <% end %>
   <% end %>
   <%= ui_button(label: "Save") %>

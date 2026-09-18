@@ -16,5 +16,23 @@ module Notey
 
       assert_select "input[type=checkbox]", 2
     end
+
+    test "submits a channel under the name the saving reads" do
+      Notey.catalog { notification :comment, channels: %w[email], default: [] }
+
+      render partial: "notey/preferences",
+        locals: { person: Member.create!, account: 7, selection: {}, submit_url: "/settings" }
+
+      assert_select "input[name='preferences[comment][]'][value=email]"
+    end
+
+    test "labels every channel a person can pick" do
+      Notey.catalog { notification :comment, channels: %w[email sms], default: [] }
+
+      render partial: "notey/preferences",
+        locals: { person: Member.create!, account: 7, selection: {}, submit_url: "/settings" }
+
+      assert_select "label", text: /Sms/
+    end
   end
 end

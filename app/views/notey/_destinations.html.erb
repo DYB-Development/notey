@@ -3,9 +3,10 @@
 <%= ui_form(action: submit_url, method: :patch) do %>
   <% Notey.catalog.channels.each do |channel| %>
     <%= ui_panel do %>
-      <h3><%= channel.humanize %></h3>
-      <%= ui_input(name: "destinations[#{channel}][address]", value: stored[channel]&.address) %>
-      <%= ui_input(name: "destinations[#{channel}][credential]", type: :password) %>
+      <%= ui_section(title: channel.humanize) do %>
+        <%= ui_input(name: "destinations[#{channel}][address]", value: stored[channel]&.address) %>
+        <%= ui_input(name: "destinations[#{channel}][credential]", type: :password) %>
+      <% end %>
     <% end %>
   <% end %>
   <%= ui_button(label: "Save") %>
