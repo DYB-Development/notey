@@ -18,7 +18,7 @@ module Notey
     private
 
     def inbox
-      Noticed::Notification.where(recipient: Current.member, account_id: Current.account_id)
+      Inbox.for(Current.member, account_id: Current.account_id)
     end
   end
 end
