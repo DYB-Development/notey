@@ -6,6 +6,7 @@ module Notey
   class DigestRunTest < ActiveSupport::TestCase
     include ActiveJob::TestHelper
     include ActionMailer::TestHelper
+    include ActiveRecord::Assertions::QueryAssertions
 
     teardown do
       Current.reset
@@ -153,6 +154,15 @@ module Notey
 
       assert_enqueued_jobs 2, only: DigestJob do
         DigestRun.new(window: "daily").call
+      end
+    end
+
+    test "does not query more as a person's notifications grow" do
+      member = member_with_daily_comment
+      notify(member, 6)
+
+      assert_queries_count 9 do
+        DigestRun.new(window: "daily").deliver_to_member(member, 7)
       end
     end
 

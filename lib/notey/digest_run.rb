@@ -58,6 +58,7 @@ module Notey
 
     def gathered(member, account_id, notification_types)
       Inbox.for(member, account_id: account_id)
+        .includes(:event)
         .where(created_at: period_start..now)
         .select { |notification| notification_types.include?(type_of(notification)) }
     end
