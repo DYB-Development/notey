@@ -24,5 +24,12 @@ module Notey
 
       assert_equal 1, Inbox.for(member, account_id: 7).count
     end
+
+    test "holds nothing when no account is set" do
+      member = notified_member
+      Noticed::Notification.last.update_column(:account_id, nil)
+
+      assert_equal 0, Inbox.for(member, account_id: nil).count
+    end
   end
 end
