@@ -50,5 +50,28 @@ module Notey
 
       assert_equal 2, ActionMailer::Base.deliveries.last.body.to_s.scan("/notifications/").size
     end
+
+    test "records how many notifications the digest held" do
+      member = member_with_daily_comment
+      notify(member, 2)
+
+      DigestRun.new(window: "daily").call
+
+      assert_equal 2, Digest.last.notifications_count
+    end
+
+    test "leaves out a notification the person set to immediate" do
+      member = member_with_daily_comment
+      Notey.catalog { notification :mention, channels: %w[test], default: %w[test] }
+      Preference.create!(member: member, account_id: 7, notification_type: "mention",
+        channels: %w[test], digest_window: "immediate")
+      notify(member, 1)
+      Current.account_id = 7
+      perform_enqueued_jobs { MentionNotifier.deliver(member) }
+
+      DigestRun.new(window: "daily").call
+
+      assert_equal 1, Digest.last.notifications_count
+    end
   end
 end
