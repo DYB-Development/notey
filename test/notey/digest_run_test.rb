@@ -6,6 +6,7 @@ module Notey
   class DigestRunTest < ActiveSupport::TestCase
     include ActiveJob::TestHelper
     include ActionMailer::TestHelper
+    include ActiveRecord::Assertions::QueryAssertions
 
     teardown do
       Current.reset
@@ -137,7 +138,7 @@ module Notey
       notify(member, 1)
 
       assert_emails 0 do
-        Channels.stub(:window_for, ->(*, **) { "immediate" }) do
+        Channels.stub(:window_of, ->(*) { "immediate" }) do
           perform_enqueued_jobs { DigestRun.new(window: "daily").call }
         end
       end
@@ -153,6 +154,33 @@ module Notey
 
       assert_enqueued_jobs 2, only: DigestJob do
         DigestRun.new(window: "daily").call
+      end
+    end
+
+    test "does not query more as a person's types in the window grow" do
+      member = member_with_daily_comment
+      Notey.catalog do
+        notification :comment, channels: %w[email], default: []
+        notification :mention, channels: %w[email], default: []
+        notification :invite, channels: %w[email], default: []
+      end
+      %w[mention invite].each do |type|
+        Preference.create!(member: member, account_id: 7, notification_type: type,
+          channels: %w[email], digest_window: "daily")
+      end
+      notify(member, 1)
+
+      assert_queries_count 9 do
+        DigestRun.new(window: "daily").deliver_to_member(member, 7)
+      end
+    end
+
+    test "does not query more as a person's notifications grow" do
+      member = member_with_daily_comment
+      notify(member, 6)
+
+      assert_queries_count 9 do
+        DigestRun.new(window: "daily").deliver_to_member(member, 7)
       end
     end
 

@@ -2,17 +2,29 @@
 
 module Notey
   class Channels
-    def self.for(member, notification_type, account_id:)
-      return [] unless Notey.catalog.declared?(notification_type)
+    Decision = Struct.new(:channels, :window, keyword_init: true)
+
+    def self.decision_for(member, notification_type, account_id:)
+      return Decision.new(channels: [], window: "immediate") unless Notey.catalog.declared?(notification_type)
 
       stored = stored_for(member, notification_type, account_id)
-      return Notey.catalog.default_channels_for(notification_type) if stored.nil?
 
-      Array(stored.channels).map(&:to_s)
+      Decision.new(
+        channels: stored ? Array(stored.channels).map(&:to_s) : Notey.catalog.default_channels_for(notification_type),
+        window: stored&.digest_window || "immediate"
+      )
+    end
+
+    def self.for(member, notification_type, account_id:)
+      decision_for(member, notification_type, account_id: account_id).channels
     end
 
     def self.window_for(member, notification_type, account_id:)
-      stored_for(member, notification_type, account_id)&.digest_window || "immediate"
+      decision_for(member, notification_type, account_id: account_id).window
+    end
+
+    def self.window_of(preference)
+      preference.digest_window || "immediate"
     end
 
     def self.stored_for(member, notification_type, account_id)
