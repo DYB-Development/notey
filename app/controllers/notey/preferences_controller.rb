@@ -7,9 +7,12 @@ module Notey
     end
 
     def update
-      chosen.each { |notification_type, channels| store(notification_type, channels) }
+      saved = chosen.map { |notification_type, channels| store(notification_type, channels) }
 
-      redirect_to preferences_path
+      return redirect_to preferences_path if saved.all?
+
+      show
+      render :show, status: :unprocessable_content
     end
 
     private

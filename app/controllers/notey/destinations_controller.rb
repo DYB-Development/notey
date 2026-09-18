@@ -7,9 +7,12 @@ module Notey
     end
 
     def update
-      submitted.each { |channel, attributes| store(channel, attributes) }
+      saved = submitted.map { |channel, attributes| store(channel, attributes) }
 
-      redirect_to destinations_path
+      return redirect_to destinations_path if saved.all?
+
+      show
+      render :show, status: :unprocessable_content
     end
 
     private

@@ -32,5 +32,15 @@ module Notey
 
       assert_nil Destination.last
     end
+
+    test "shows the page again when a destination does not save" do
+      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+
+      patch "/notey/destinations",
+        params: { destinations: { recording: { address: "" } } },
+        headers: headers_for(Member.create!)
+
+      assert_response :unprocessable_content
+    end
   end
 end

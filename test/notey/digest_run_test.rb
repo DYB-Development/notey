@@ -30,7 +30,7 @@ module Notey
       notify(member, 2)
 
       assert_emails 1 do
-        DigestRun.new(window: "daily").call
+        perform_enqueued_jobs { DigestRun.new(window: "daily").call }
       end
     end
 
@@ -38,7 +38,7 @@ module Notey
       member_with_daily_comment
 
       assert_emails 0 do
-        DigestRun.new(window: "daily").call
+        perform_enqueued_jobs { DigestRun.new(window: "daily").call }
       end
     end
 
@@ -46,7 +46,7 @@ module Notey
       member = member_with_daily_comment
       notify(member, 2)
 
-      DigestRun.new(window: "daily").call
+      perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 
       assert_equal 2, ActionMailer::Base.deliveries.last.body.to_s.scan("/notifications/").size
     end
@@ -55,7 +55,7 @@ module Notey
       member = member_with_daily_comment
       notify(member, 2)
 
-      DigestRun.new(window: "daily").call
+      perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 
       assert_equal 2, Digest.last.notifications_count
     end
@@ -64,31 +64,31 @@ module Notey
       member = member_with_daily_comment
       notify(member, 2)
 
-      DigestRun.new(window: "daily").call
+      perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 
       assert_emails 0 do
-        DigestRun.new(window: "daily").call
+        perform_enqueued_jobs { DigestRun.new(window: "daily").call }
       end
     end
 
-    test "leaves the window unsent when the run fails before sending" do
+    test "releases the window when the send fails so it can be sent again" do
       member = member_with_daily_comment
       notify(member, 1)
 
       DigestMailer.stub(:digest, ->(*) { raise "mail is down" }) do
-        assert_raises(RuntimeError) { DigestRun.new(window: "daily").call }
+        assert_raises(RuntimeError) { DigestRun.new(window: "daily").deliver_to_member(member, 7) }
       end
 
-      assert_nil Digest.last.sent_at
+      assert_nil Digest.last
     end
 
     test "does not send the window again when the run fails after sending" do
       member = member_with_daily_comment
       notify(member, 1)
-      DigestRun.new(window: "daily").call
+      perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 
       assert_emails 0 do
-        DigestRun.new(window: "daily").call
+        perform_enqueued_jobs { DigestRun.new(window: "daily").call }
       end
     end
 
@@ -102,11 +102,11 @@ module Notey
         DigestMailer.stub(:digest, lambda { |*args|
           unless overlapped
             overlapped = true
-            DigestRun.new(window: "daily").call
+            DigestRun.new(window: "daily").deliver_to_member(member, 7)
           end
           original.call(*args)
         }) do
-          DigestRun.new(window: "daily").call
+          perform_enqueued_jobs { DigestRun.new(window: "daily").call }
         end
       end
     end
@@ -117,7 +117,7 @@ module Notey
 
       assert_emails 0 do
         Inbox.stub(:for, ->(*) { Noticed::Notification.none }) do
-          DigestRun.new(window: "daily").call
+          perform_enqueued_jobs { DigestRun.new(window: "daily").call }
         end
       end
     end
@@ -128,7 +128,7 @@ module Notey
       Noticed::Notification.last.update_column(:account_id, nil)
 
       assert_emails 0 do
-        DigestRun.new(window: "daily").call
+        perform_enqueued_jobs { DigestRun.new(window: "daily").call }
       end
     end
 
@@ -138,8 +138,21 @@ module Notey
 
       assert_emails 0 do
         Channels.stub(:window_for, ->(*, **) { "immediate" }) do
-          DigestRun.new(window: "daily").call
+          perform_enqueued_jobs { DigestRun.new(window: "daily").call }
         end
+      end
+    end
+
+    test "sends each person's digest in its own job" do
+      first = member_with_daily_comment
+      notify(first, 1)
+      second = Member.create!(email: "other@example.com")
+      Preference.create!(member: second, account_id: 7, notification_type: "comment",
+        channels: %w[email], digest_window: "daily")
+      notify(second, 1)
+
+      assert_enqueued_jobs 2, only: DigestJob do
+        DigestRun.new(window: "daily").call
       end
     end
 
@@ -147,7 +160,7 @@ module Notey
       member = member_with_daily_comment
       notify(member, 1)
 
-      DigestRun.new(window: "daily").call
+      perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 
       assert_equal "daily", Digest.last.digest_window
     end
@@ -156,7 +169,7 @@ module Notey
       member = member_with_daily_comment
       notify(member, 1)
 
-      DigestRun.new(window: "daily").call
+      perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 
       assert_not_nil Digest.last.sent_at
     end
@@ -170,7 +183,7 @@ module Notey
       Current.account_id = 7
       perform_enqueued_jobs { MentionNotifier.deliver(member) }
 
-      DigestRun.new(window: "daily").call
+      perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 
       assert_equal 1, Digest.last.notifications_count
     end
