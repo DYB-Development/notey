@@ -10,9 +10,8 @@ module Notey
       return if notifier.nil?
 
       payload = event.payload.to_h.symbolize_keys
-      Current.account_id = payload[:account_id]
 
-      notifier.with(**payload).deliver
+      Current.set(account_id: payload[:account_id]) { notifier.with(**payload).deliver }
     end
   end
 end

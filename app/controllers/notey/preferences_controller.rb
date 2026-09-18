@@ -15,7 +15,7 @@ module Notey
     private
 
     def chosen
-      params.fetch(:preferences, {}).permit!.to_h
+      params.fetch(:preferences, {}).permit!.to_h.select { |type, _| Notey.catalog.declared?(type) }
     end
 
     def windows

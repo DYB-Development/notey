@@ -72,5 +72,15 @@ module Notey
 
       assert_equal "daily", Preference.last.digest_window
     end
+
+    test "ignores a notification type the catalog does not declare" do
+      Notey.catalog { notification :comment, channels: %w[email], default: %w[email] }
+
+      patch "/notey/preferences",
+        params: { preferences: { invented: %w[email] } },
+        headers: headers_for(Member.create!)
+
+      assert_nil Preference.last
+    end
   end
 end
