@@ -4,6 +4,10 @@ module Notey
   class Preference < ApplicationRecord
     belongs_to :member, polymorphic: true
 
+    WINDOWS = %w[immediate daily weekly].freeze
+
+    validates :digest_window, inclusion: { in: WINDOWS, message: "is not a window notey sends on" }
+
     validate :channels_offered_for_notification_type
 
     private
