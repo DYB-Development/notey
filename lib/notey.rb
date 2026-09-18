@@ -12,7 +12,11 @@ module Notey
   class UndeliverableChannel < StandardError; end
 
   class << self
-    attr_writer :notification_url
+    attr_writer :notification_url, :mailer_sender
+  end
+
+  def self.mailer_sender
+    @mailer_sender
   end
 
   def self.notification_url
