@@ -4,6 +4,7 @@ module Notey
   class DestinationsController < ApplicationController
     def show
       @channels = Notey.catalog.channels
+      @stored = Destination.where(account_id: Current.account_id).index_by(&:channel)
     end
 
     def update

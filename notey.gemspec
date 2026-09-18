@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
     Dir["{app,config,db,lib,the_local}/**/*", "LICENSE.txt", "Rakefile", "README.md"]
   end
 
-  spec.add_dependency "rails", ">= 7.1"
+  spec.add_dependency "rails", ">= 8.1", "< 9"
   spec.add_dependency "noticed", ">= 3.0"
   spec.add_dependency "keystone_ui", ">= 0.9"
 end
