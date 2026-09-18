@@ -4,6 +4,8 @@ module Notey
   class PreferencesController < ApplicationController
     def show
       @notifications = Notey.catalog.notifications
+      @stored = Preference.where(member: Current.member, account_id: Current.account_id)
+                          .index_by(&:notification_type)
     end
 
     def update

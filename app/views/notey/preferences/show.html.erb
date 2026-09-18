@@ -9,14 +9,14 @@
               <input type="checkbox"
                      name="preferences[<%= name %>][]"
                      value="<%= channel %>"
-                     <%= "checked" if Notey::Current.member.channels_for(name).include?(channel) %>>
+                     <%= "checked" if chosen_channels(@stored[name], name).include?(channel) %>>
               <%= channel.humanize %>
             </label>
           <% end %>
           <%= ui_select(
                 name: "windows[#{name}]",
                 options: [ [ "Immediately", "immediate" ], [ "Once a day", "daily" ], [ "Once a week", "weekly" ] ],
-                selected: Notey::Current.member.digest_window_for(name)
+                selected: @stored[name]&.digest_window || "immediate"
               ) %>
         <% end %>
       <% end %>

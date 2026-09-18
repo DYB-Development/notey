@@ -13,6 +13,26 @@ module Notey
       { "X-Member-Id" => member.id.to_s, "X-Account-Id" => account_id.to_s }
     end
 
+    def preference_queries(&block)
+      count = 0
+      counter = ->(*, payload) { count += 1 if payload[:sql].to_s.include?("notey_preferences") }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
+      count
+    end
+
+    test "reads a person's preferences once however many types the catalog declares" do
+      Notey.catalog do
+        notification :comment, channels: %w[email sms], default: %w[email]
+        notification :mention, channels: %w[email sms], default: %w[email]
+        notification :invite, channels: %w[email sms], default: %w[email]
+      end
+      member = Member.create!
+
+      queries = preference_queries { get "/notey/preferences", headers: headers_for(member) }
+
+      assert_equal 1, queries
+    end
+
     test "lists every notification type the app declares" do
       Notey.catalog do
         notification :comment, channels: %w[email], default: %w[email]
