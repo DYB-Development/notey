@@ -15,7 +15,7 @@ module Notey
     private
 
     def submitted
-      params.fetch(:destinations, {}).permit!.to_h
+      params.fetch(:destinations, {}).permit!.to_h.slice(*Notey.catalog.channels)
     end
 
     def store(channel, attributes)

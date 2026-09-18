@@ -22,5 +22,15 @@ module Notey
 
       assert_equal "https://x.example.com", Destination.last.address
     end
+
+    test "ignores a channel the catalog does not offer" do
+      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+
+      patch "/notey/destinations",
+        params: { destinations: { carrier_pigeon: { address: "https://x.example.com" } } },
+        headers: headers_for(Member.create!)
+
+      assert_nil Destination.last
+    end
   end
 end
