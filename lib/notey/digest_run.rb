@@ -2,7 +2,7 @@
 
 module Notey
   class DigestRun
-    PERIODS = { "daily" => 1.day, "weekly" => 1.week }.freeze
+    PERIODS = { "daily" => :day, "weekly" => :week }.freeze
 
     def initialize(window:, now: Time.current)
       @window = window.to_s
@@ -26,25 +26,32 @@ module Notey
       notifications = gathered(member, account_id, grouped.map(&:notification_type))
       return if notifications.empty?
 
+      digest = claim(member, account_id)
+      return if digest.nil? || digest.sent_at.present?
+
       DigestMailer.digest(member, notifications, window).deliver_now
-      Digest.create!(member: member, account_id: account_id, digest_window: window,
-        notifications_count: notifications.size, sent_at: Time.current)
+      digest.update!(notifications_count: notifications.size, sent_at: Time.current)
+    end
+
+    def claim(member, account_id)
+      Digest.create!(member: member, account_id: account_id, digest_window: window, period_start: period_start)
+    rescue ActiveRecord::RecordNotUnique
+      Digest.find_by(member: member, account_id: account_id, digest_window: window, period_start: period_start)
     end
 
     def gathered(member, account_id, notification_types)
       Noticed::Notification
         .where(recipient: member, account_id: account_id)
-        .where(created_at: since..now)
+        .where(created_at: period_start..now)
         .select { |notification| notification_types.include?(type_of(notification)) }
     end
 
     def type_of(notification)
-      event_class = notification.event.class
-      event_class.try(:notey_notification_type)
+      notification.event.class.try(:notey_notification_type)
     end
 
-    def since
-      now - PERIODS.fetch(window)
+    def period_start
+      @period_start ||= now.public_send("beginning_of_#{PERIODS.fetch(window)}")
     end
   end
 end

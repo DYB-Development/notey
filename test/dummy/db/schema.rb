@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_030002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_040001) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
@@ -24,8 +24,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_030002) do
     t.integer "member_id", null: false
     t.string "member_type", null: false
     t.integer "notifications_count", default: 0, null: false
+    t.datetime "period_start", null: false
     t.datetime "sent_at"
     t.datetime "updated_at", null: false
+    t.index ["member_type", "member_id", "account_id", "digest_window", "period_start"], name: "index_notey_digests_unique", unique: true
     t.index ["member_type", "member_id"], name: "index_notey_digests_on_member"
   end
 

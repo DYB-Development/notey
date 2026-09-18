@@ -60,6 +60,17 @@ module Notey
       assert_equal 2, Digest.last.notifications_count
     end
 
+    test "sends one email when the run happens twice for the same window" do
+      member = member_with_daily_comment
+      notify(member, 2)
+
+      DigestRun.new(window: "daily").call
+
+      assert_emails 0 do
+        DigestRun.new(window: "daily").call
+      end
+    end
+
     test "records the window the digest covered" do
       member = member_with_daily_comment
       notify(member, 1)
