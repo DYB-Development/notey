@@ -1,3 +1,9 @@
 ActiveSupport.on_load :noticed_event do
-  before_save { self.account_id ||= Notey::Current.account_id }
+  after_initialize { self.account_id ||= Notey::Current.account_id }
+
+  def recipient_attributes_for(recipient)
+    super.merge(account_id: account_id)
+  end
 end
+
+Notey.notification_url = ->(notification) { "https://example.com/notifications/#{notification.id}" }

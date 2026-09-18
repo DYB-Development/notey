@@ -1,0 +1,8 @@
+<h1>Your <%= @window %> notifications</h1>
+
+<ul>
+  <% @notifications.each do |notification| %>
+    <% url = Notey.notification_url.call(notification) %>
+    <li><%= url ? link_to(notification.event.class.name, url) : notification.event.class.name %></li>
+  <% end %>
+</ul>

@@ -10,10 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_020001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_030002) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "email"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "notey_digests", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.string "digest_window", null: false
+    t.integer "member_id", null: false
+    t.string "member_type", null: false
+    t.integer "notifications_count", default: 0, null: false
+    t.datetime "sent_at"
+    t.datetime "updated_at", null: false
+    t.index ["member_type", "member_id"], name: "index_notey_digests_on_member"
   end
 
   create_table "notey_preferences", force: :cascade do |t|

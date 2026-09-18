@@ -1,8 +1,17 @@
 require "notey/version"
 require "notey/engine"
 require "notey/catalog"
+require "notey/digest_run"
 
 module Notey
+  class << self
+    attr_writer :notification_url
+  end
+
+  def self.notification_url
+    @notification_url || ->(notification) { nil }
+  end
+
   def self.catalog(&block)
     @catalog ||= Catalog.new
     @catalog.instance_eval(&block) if block
