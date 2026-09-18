@@ -28,7 +28,7 @@ module Notey
       preference = Preference.find_or_initialize_by(
         member: @person, account_id: @account_id, notification_type: notification_type.to_s
       )
-      preference.channels = Array(channels).map(&:to_s)
+      preference.channels = Array(channels).map(&:to_s).reject(&:blank?)
       preference.digest_window = windows.fetch(notification_type.to_s, "immediate")
 
       Refusal.new(preference.errors.full_messages.first) unless preference.save
