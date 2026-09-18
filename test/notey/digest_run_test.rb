@@ -122,6 +122,16 @@ module Notey
       end
     end
 
+    test "sends nothing when the notifications carry no account" do
+      member = member_with_daily_comment
+      notify(member, 1)
+      Noticed::Notification.last.update_column(:account_id, nil)
+
+      assert_emails 0 do
+        DigestRun.new(window: "daily").call
+      end
+    end
+
     test "records the window the digest covered" do
       member = member_with_daily_comment
       notify(member, 1)

@@ -89,5 +89,25 @@ module Notey
 
       assert_select "body", text: /0 unread/
     end
+
+    test "counts no unread when no account is set" do
+      member = Member.create!
+      notify(member)
+      Noticed::Notification.last.update_column(:account_id, nil)
+
+      get "/notey/notifications", headers: { "X-Member-Id" => member.id.to_s }
+
+      assert_select "body", text: /0 unread/
+    end
+
+    test "lists nothing when no account is set" do
+      member = Member.create!
+      notify(member)
+      Noticed::Notification.last.update_column(:account_id, nil)
+
+      get "/notey/notifications", headers: { "X-Member-Id" => member.id.to_s }
+
+      assert_select "[data-notification-id]", 0
+    end
   end
 end
