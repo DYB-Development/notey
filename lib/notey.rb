@@ -2,6 +2,7 @@ require "notey/version"
 require "notey/engine"
 require "notey/catalog"
 require "notey/channels"
+require "notey/destinations"
 require "notey/event_subscriber"
 require "notey/inbox"
 require "notey/digest_run"
@@ -13,6 +14,14 @@ module Notey
 
   def self.notification_url
     @notification_url || ->(notification) { nil }
+  end
+
+  def self.destination_address(channel)
+    -> { Destinations.for(event.account_id, channel)&.address }
+  end
+
+  def self.addressed(channel)
+    -> { Destinations.for(event.account_id, channel).present? }
   end
 
   def self.deliver_on(event_name, notifier)
