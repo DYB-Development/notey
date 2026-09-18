@@ -7,3 +7,5 @@ ActiveSupport.on_load :noticed_event do
 end
 
 Notey.notification_url = ->(notification) { "https://example.com/notifications/#{notification.id}" }
+
+Notey.mailer_sender = "notifications@example.com"

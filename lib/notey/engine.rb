@@ -9,6 +9,10 @@ module Notey
       app.config.filter_parameters += [ :credential ]
     end
 
+    initializer "notey.forget_notifiers_on_reload" do
+      ActiveSupport::Reloader.before_class_unload { Notey.forget_notifiers }
+    end
+
     config.after_initialize { |app| Notey.check! if app.config.eager_load }
   end
 end

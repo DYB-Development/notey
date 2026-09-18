@@ -22,7 +22,34 @@ module Notey
         notification :mention, channels: %w[test], default: %w[test]
       end
 
-      assert_empty Notey.check!
+      assert_nothing_raised { Notey.check! }
+    end
+
+    test "forgets the notifiers it registered" do
+      registered = Notey.notifiers.dup
+      Class.new(Noticed::Event) { include Notey::Notifier }
+
+      Notey.forget_notifiers
+
+      assert_empty Notey.notifiers
+    ensure
+      registered.each { |notifier| Notey.register_notifier(notifier) }
+    end
+
+    test "refuses a catalog with no sender address for its digests" do
+      Rails.application.eager_load!
+      Notey.catalog do
+        notification :comment, channels: %w[test recording], default: %w[test]
+        notification :mention, channels: %w[test], default: %w[test]
+      end
+      previous = Notey.mailer_sender
+      Notey.mailer_sender = nil
+
+      error = assert_raises(Notey::MissingSender) { Notey.check! }
+
+      assert_match(/mailer_sender/, error.message)
+    ensure
+      Notey.mailer_sender = previous
     end
 
     test "refuses a catalog channel nothing delivers on" do

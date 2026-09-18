@@ -10,9 +10,14 @@ require "notey/digest_run"
 module Notey
   class UndeclaredType < StandardError; end
   class UndeliverableChannel < StandardError; end
+  class MissingSender < StandardError; end
 
   class << self
-    attr_writer :notification_url
+    attr_writer :notification_url, :mailer_sender
+  end
+
+  def self.mailer_sender
+    @mailer_sender
   end
 
   def self.notification_url
@@ -27,11 +32,22 @@ module Notey
     @notifiers ||= []
   end
 
+  def self.forget_notifiers
+    @notifiers = []
+  end
+
   def self.check!
     return if catalog.notifications.empty?
 
     check_declared_types!
     check_deliverable_channels!
+    check_sender!
+  end
+
+  def self.check_sender!
+    return if mailer_sender.present?
+
+    raise MissingSender, "notey sends digests by email and no mailer_sender is set"
   end
 
   def self.check_deliverable_channels!
