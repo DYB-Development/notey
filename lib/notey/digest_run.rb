@@ -23,7 +23,7 @@ module Notey
     end
 
     def deliver_to(member, account_id, grouped)
-      notifications = gathered(member, account_id, grouped.map(&:notification_type))
+      notifications = gathered(member, account_id, types_in_window(member, account_id, grouped))
       return if notifications.empty?
 
       digest = claim(member, account_id)
@@ -37,6 +37,12 @@ module Notey
       Digest.create!(member: member, account_id: account_id, digest_window: window, period_start: period_start)
     rescue ActiveRecord::RecordNotUnique
       nil
+    end
+
+    def types_in_window(member, account_id, grouped)
+      grouped.map(&:notification_type).select do |notification_type|
+        Channels.window_for(member, notification_type, account_id: account_id) == window
+      end
     end
 
     def gathered(member, account_id, notification_types)
