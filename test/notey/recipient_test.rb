@@ -13,5 +13,14 @@ module Notey
 
       assert member.wants?("comment", on: "email")
     end
+
+    test "holds different channels for the same person in two accounts" do
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[email])
+      Preference.create!(member: member, account_id: 8, notification_type: "comment", channels: %w[sms])
+      Current.account_id = 8
+
+      assert_equal %w[sms], member.channels_for("comment")
+    end
   end
 end
