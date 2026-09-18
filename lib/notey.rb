@@ -1,6 +1,7 @@
 require "notey/version"
 require "notey/engine"
 require "notey/catalog"
+require "notey/inbox"
 require "notey/digest_run"
 
 module Notey

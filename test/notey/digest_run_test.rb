@@ -111,6 +111,17 @@ module Notey
       end
     end
 
+    test "gathers what the one relation holds and nothing else" do
+      member = member_with_daily_comment
+      notify(member, 1)
+
+      assert_emails 0 do
+        Inbox.stub(:for, ->(*) { Noticed::Notification.none }) do
+          DigestRun.new(window: "daily").call
+        end
+      end
+    end
+
     test "records the window the digest covered" do
       member = member_with_daily_comment
       notify(member, 1)

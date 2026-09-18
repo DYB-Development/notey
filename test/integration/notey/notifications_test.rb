@@ -67,5 +67,27 @@ module Notey
 
       assert_select "body", text: /2 unread/
     end
+
+    test "lists what the one relation holds and nothing else" do
+      member = Member.create!
+      notify(member)
+
+      Inbox.stub(:for, ->(*) { Noticed::Notification.none }) do
+        get "/notey/notifications", headers: headers_for(member)
+      end
+
+      assert_select "[data-notification-id]", 0
+    end
+
+    test "counts unread from the one relation and nothing else" do
+      member = Member.create!
+      notify(member)
+
+      Inbox.stub(:for, ->(*) { Noticed::Notification.none }) do
+        get "/notey/notifications", headers: headers_for(member)
+      end
+
+      assert_select "body", text: /0 unread/
+    end
   end
 end
