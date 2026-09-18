@@ -32,5 +32,13 @@ module Notey
 
       assert_equal %w[email], Member.create!.channels_for("comment")
     end
+
+    test "returns the declared default when no account is set" do
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[sms])
+      Notey.catalog { notification :comment, default: %w[email] }
+
+      assert_equal %w[email], member.channels_for("comment")
+    end
   end
 end
