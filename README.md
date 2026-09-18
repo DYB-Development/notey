@@ -1,8 +1,8 @@
 # Notey
 
 Notey is the notification layer for multi-tenant Rails apps. It sits on top of
-[Noticed](https://github.com/excid3/noticed), which every app here already
-depends on, and supplies the parts Noticed leaves to the host.
+[Noticed](https://github.com/excid3/noticed) and supplies the parts Noticed
+leaves to the host.
 
 ## What Noticed already does
 
@@ -15,17 +15,178 @@ depends on, and supplies the parts Noticed leaves to the host.
 
 ## What Notey adds
 
-- **Preferences.** Which channels a person wants for each notification type,
-  stored rather than left to an `if:` lambda over a column the host invents.
-- **Preference screens.** The pages a person sets those preferences on.
-- **An inbox.** In-app notification screens scoped to the account the person is
-  currently in, rather than one merged list across every account they belong to.
-- **Digests.** Grouping notifications over a window instead of sending each one
-  as it happens.
+- **A catalog.** One declaration naming every notification type, the channels it
+  may be delivered on, and the channels a person gets by default.
+- **Preferences.** Which channels a person wants for each type, per account,
+  with a page they set them on.
+- **Digest windows.** A type set to daily or weekly is held back and sent as one
+  email covering the window.
+- **An inbox.** In-app notification pages scoped to the account the person is in.
+- **Destinations.** An address and an encrypted credential per account per
+  channel, so an account points a channel at its own workspace or endpoint.
+- **Domain events.** A mapping from an event your app already publishes to the
+  notifier that should deliver it.
 
-## Status
+## Installation
 
-Nothing is built yet. The plan is filed as a `type:plan` issue on this repo.
+```ruby
+gem "notey"
+```
+
+```bash
+bundle install
+bin/rails notey:install:migrations
+bin/rails db:migrate
+```
+
+Mount the engine:
+
+```ruby
+# config/routes.rb
+mount Notey::Engine => "/notey"
+```
+
+That gives you `/notey/preferences`, `/notey/notifications` and
+`/notey/destinations`.
+
+## Wiring
+
+Notey owns its own tables and never owns your person or account records. Six
+things connect it to yours.
+
+### 1. Declare the catalog
+
+Nothing works until a type is declared. A preference for an undeclared type is
+refused, a channel the catalog does not offer for a type is refused, and a
+notifier naming an undeclared type raises when the app boots.
+
+```ruby
+# config/initializers/notey.rb
+Notey.catalog do
+  notification :comment, channels: %w[email sms], default: %w[email]
+  notification :mention, channels: %w[email], default: []
+end
+```
+
+### 2. Make your person model a recipient
+
+```ruby
+class User < ApplicationRecord
+  include Notey::Recipient
+end
+```
+
+### 3. Set the current person and account per request
+
+```ruby
+class ApplicationController < ActionController::Base
+  before_action do
+    Notey::Current.member = current_user
+    Notey::Current.account_id = current_account&.id
+  end
+end
+```
+
+A read with no account set returns the declared defaults and an empty inbox,
+never another account's rows.
+
+### 4. Put the account on Noticed's rows
+
+Notey reads the account from the Noticed event, because a delivery runs in a job
+where the current account is gone. Noticed does not add that column, so your app
+does.
+
+```ruby
+# a migration
+add_column :noticed_events, :account_id, :bigint
+add_column :noticed_notifications, :account_id, :bigint
+```
+
+```ruby
+# config/initializers/noticed.rb
+ActiveSupport.on_load :noticed_event do
+  after_initialize { self.account_id ||= Notey::Current.account_id }
+
+  def recipient_attributes_for(recipient)
+    super.merge(account_id: account_id)
+  end
+end
+```
+
+### 5. Point your notifiers at the catalog
+
+Each notifier names its type, and each delivery method asks whether the
+recipient wants that channel.
+
+```ruby
+class CommentNotifier < Noticed::Event
+  include Notey::Notifier
+  notey_type :comment
+
+  deliver_by :email do |config|
+    config.mailer = "CommentMailer"
+    config.if = Notey.wanted(:comment, on: :email)
+  end
+end
+```
+
+### 6. Tell Notey where a notification lives
+
+Digest emails link to each notification through a lambda you supply, so the link
+points at your own page rather than one this engine picks.
+
+```ruby
+# config/initializers/notey.rb
+Notey.notification_url = lambda do |notification|
+  Rails.application.routes.url_helpers.notification_url(notification)
+end
+```
+
+## Sending digests
+
+A type set to daily or weekly sends nothing when it happens. Run the window on a
+schedule — Notey does not register one:
+
+```ruby
+Notey::DigestRun.new(window: "daily").call
+Notey::DigestRun.new(window: "weekly").call
+```
+
+Each run enqueues one job per person, so one failing send does not stop the
+rest. A window is sent once even if the run overlaps itself; a send that fails
+releases the window so it can be sent again.
+
+## Destinations
+
+An account stores an address and a credential per channel on
+`/notey/destinations`, and a notifier reads them through the options Noticed
+already evaluates:
+
+```ruby
+deliver_by :webhook do |config|
+  config.url = Notey.destination_address(:webhook)
+  config.if = Notey.addressed(:webhook)
+end
+```
+
+The credential is encrypted at rest, which needs Active Record encryption keys
+configured in your app. A channel with no destination for that account sends
+nothing on it.
+
+**Nothing in this engine restricts who may set a destination.** Gate
+`/notey/destinations` in your own app.
+
+## Domain events
+
+With [`event_engine`](https://github.com/DYB-Development/event_engine) and
+`event_engine-subscribers` installed, map an event to a notifier:
+
+```ruby
+Notey.deliver_on :comment_posted, CommentNotifier
+```
+
+The subscriber sets the account from the event's payload, delivers the notifier,
+and restores the account it found. An event with no mapping does nothing.
 
 ## Development
 

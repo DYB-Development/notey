@@ -1,0 +1,52 @@
+scope: notifications — a catalog of notification types, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a mapping from domain events to notifiers
+
+install:
+  - bin/rails notey:install:migrations
+  - mount Notey::Engine
+  - Notey.catalog
+  - Notey::Recipient
+  - Notey::Notifier
+  - Notey::Current
+  - Notey.notification_url=
+  - Notey.check!
+  - /notey/preferences
+  - /notey/notifications
+  - /notey/destinations
+
+develop:
+  - notey_type
+  - Notey.wanted
+  - Notey.deliver_on
+  - Notey.destination_address
+  - Notey.addressed
+  - Notey::DigestRun
+  - Notey::Inbox.for
+  - wants?
+  - channels_for
+  - digest_window_for
+  - Notey.reset!
+
+sources:
+  - lib/notey.rb
+  - lib/notey/engine.rb
+  - lib/notey/catalog.rb
+  - lib/notey/channels.rb
+  - lib/notey/destinations.rb
+  - lib/notey/digest_run.rb
+  - lib/notey/event_subscriber.rb
+  - lib/notey/inbox.rb
+  - app/models/concerns/notey/recipient.rb
+  - app/models/concerns/notey/notifier.rb
+  - app/models/notey/current.rb
+  - app/models/notey/preference.rb
+  - app/models/notey/destination.rb
+  - app/models/notey/digest.rb
+  - app/jobs/notey/digest_job.rb
+  - app/mailers/notey/digest_mailer.rb
+  - app/controllers/notey/preferences_controller.rb
+  - app/controllers/notey/notifications_controller.rb
+  - app/controllers/notey/destinations_controller.rb
+  - config/routes.rb
+  - db/migrate/20260917000002_create_notey_preferences.rb
+  - db/migrate/20260918030002_create_notey_digests.rb
+  - db/migrate/20260918050001_create_notey_destinations.rb
