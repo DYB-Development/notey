@@ -28,6 +28,8 @@ module Notey
   end
 
   def self.check!
+    return if catalog.notifications.empty?
+
     check_declared_types!
     check_deliverable_channels!
   end
