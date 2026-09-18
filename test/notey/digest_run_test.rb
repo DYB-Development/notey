@@ -92,15 +92,22 @@ module Notey
       end
     end
 
-    test "sends the window on a retry after the run failed before sending" do
+    test "sends one email when a second run starts while the first is sending" do
       member = member_with_daily_comment
       notify(member, 1)
-      DigestMailer.stub(:digest, ->(*) { raise "mail is down" }) do
-        assert_raises(RuntimeError) { DigestRun.new(window: "daily").call }
-      end
+      original = DigestMailer.method(:digest)
+      overlapped = false
 
       assert_emails 1 do
-        DigestRun.new(window: "daily").call
+        DigestMailer.stub(:digest, lambda { |*args|
+          unless overlapped
+            overlapped = true
+            DigestRun.new(window: "daily").call
+          end
+          original.call(*args)
+        }) do
+          DigestRun.new(window: "daily").call
+        end
       end
     end
 

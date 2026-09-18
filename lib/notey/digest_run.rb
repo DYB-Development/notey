@@ -27,7 +27,7 @@ module Notey
       return if notifications.empty?
 
       digest = claim(member, account_id)
-      return if digest.nil? || digest.sent_at.present?
+      return if digest.nil?
 
       DigestMailer.digest(member, notifications, window).deliver_now
       digest.update!(notifications_count: notifications.size, sent_at: Time.current)
@@ -36,7 +36,7 @@ module Notey
     def claim(member, account_id)
       Digest.create!(member: member, account_id: account_id, digest_window: window, period_start: period_start)
     rescue ActiveRecord::RecordNotUnique
-      Digest.find_by(member: member, account_id: account_id, digest_window: window, period_start: period_start)
+      nil
     end
 
     def gathered(member, account_id, notification_types)
