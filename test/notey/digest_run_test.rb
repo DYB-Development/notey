@@ -33,5 +33,13 @@ module Notey
         DigestRun.new(window: "daily").call
       end
     end
+
+    test "sends no email to a person with nothing in the window" do
+      member_with_daily_comment
+
+      assert_emails 0 do
+        DigestRun.new(window: "daily").call
+      end
+    end
   end
 end
