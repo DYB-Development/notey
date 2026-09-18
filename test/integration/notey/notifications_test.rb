@@ -93,6 +93,7 @@ module Notey
     test "counts no unread when no account is set" do
       member = Member.create!
       notify(member)
+      Noticed::Notification.last.update_column(:account_id, nil)
 
       get "/notey/notifications", headers: { "X-Member-Id" => member.id.to_s }
 
@@ -102,6 +103,7 @@ module Notey
     test "lists nothing when no account is set" do
       member = Member.create!
       notify(member)
+      Noticed::Notification.last.update_column(:account_id, nil)
 
       get "/notey/notifications", headers: { "X-Member-Id" => member.id.to_s }
 
