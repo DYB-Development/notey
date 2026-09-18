@@ -18,13 +18,20 @@ module Notey
       params.fetch(:preferences, {}).permit!.to_h
     end
 
+    def windows
+      params.fetch(:windows, {}).permit!.to_h
+    end
+
     def store(notification_type, channels)
       preference = Preference.find_or_initialize_by(
         member: Current.member,
         account_id: Current.account_id,
         notification_type: notification_type.to_s
       )
-      preference.update(channels: Array(channels).map(&:to_s))
+      preference.update(
+        channels: Array(channels).map(&:to_s),
+        digest_window: windows.fetch(notification_type.to_s, "immediate")
+      )
     end
   end
 end
