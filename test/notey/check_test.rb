@@ -4,11 +4,17 @@ require "test_helper"
 
 module Notey
   class CheckTest < ActiveSupport::TestCase
+    setup do
+      Rails.application.eager_load!
+      [ CommentNotifier, MentionNotifier, HookNotifier, ThingHappenedNotifier ].each do |notifier|
+        Notey.register_notifier(notifier)
+      end
+    end
+
     teardown { Notey.reset! }
 
     test "names the type and the notifier when a notifier names a type the catalog does not hold" do
       Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
-      MentionNotifier
 
       error = assert_raises(Notey::UndeclaredType) { Notey.check! }
 
@@ -16,13 +22,23 @@ module Notey
     end
 
     test "passes when every declared type and channel is delivered" do
-      Rails.application.eager_load!
       Notey.catalog do
         notification :comment, channels: %w[test recording], default: %w[test]
         notification :mention, channels: %w[test], default: %w[test]
       end
 
       assert_nothing_raised { Notey.check! }
+    end
+
+    test "forgets the notifiers when everything is reset" do
+      registered = Notey.notifiers.dup
+      Class.new(Noticed::Event) { include Notey::Notifier }
+
+      Notey.reset!
+
+      assert_empty Notey.notifiers
+    ensure
+      registered.each { |notifier| Notey.register_notifier(notifier) }
     end
 
     test "forgets the notifiers it registered" do
@@ -37,7 +53,6 @@ module Notey
     end
 
     test "refuses a catalog with no sender address for its digests" do
-      Rails.application.eager_load!
       Notey.catalog do
         notification :comment, channels: %w[test recording], default: %w[test]
         notification :mention, channels: %w[test], default: %w[test]
@@ -57,7 +72,6 @@ module Notey
         notification :comment, channels: %w[test carrier-pigeon], default: %w[test]
         notification :mention, channels: %w[test], default: %w[test]
       end
-      MentionNotifier
 
       error = assert_raises(Notey::UndeliverableChannel) { Notey.check! }
 
