@@ -19,6 +19,19 @@ module Notey
       Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
     end
 
+    test "puts back the account that was set before the event" do
+      declared_comment
+      Notey.deliver_on :thing_happened, ThingHappenedNotifier
+      Current.account_id = 99
+
+      perform_enqueued_jobs do
+        EventSubscriber.new.handle(Event.new(event_name: :thing_happened,
+          payload: { account_id: 7, member_ids: [] }))
+      end
+
+      assert_equal 99, Current.account_id
+    end
+
     test "delivers the notifier mapped to a domain event" do
       declared_comment
       member = Member.create!
