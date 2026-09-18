@@ -43,6 +43,15 @@ module Notey
       count
     end
 
+    test "lists at most one page of notifications" do
+      member = Member.create!
+      (Notey::NotificationsController::PER_PAGE + 1).times { notify(member) }
+
+      get "/notey/notifications", headers: headers_for(member)
+
+      assert_select "[data-notification-id]", Notey::NotificationsController::PER_PAGE
+    end
+
     test "lists the notifications addressed to a person in the account they are in" do
       member = Member.create!
       notify(member)
