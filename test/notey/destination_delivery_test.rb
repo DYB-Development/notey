@@ -26,5 +26,19 @@ module Notey
 
       assert_equal [ "https://seven.example.com" ], RecordingDeliveryMethod.sent
     end
+
+    test "sends nothing on a channel the account stored no destination for" do
+      notify(Member.create!)
+
+      assert_empty RecordingDeliveryMethod.sent
+    end
+
+    test "never uses one account's destination for another account's notification" do
+      Destination.create!(account_id: 7, channel: "recording", address: "https://seven.example.com")
+
+      notify(Member.create!, account_id: 8)
+
+      assert_empty RecordingDeliveryMethod.sent
+    end
   end
 end
