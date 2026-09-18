@@ -30,5 +30,14 @@ module Notey
 
       assert_select "[data-notification-id]", 1
     end
+
+    test "leaves out a notification belonging to another of that person's accounts" do
+      member = Member.create!
+      notify(member, account_id: 8)
+
+      get "/notey/notifications", headers: headers_for(member, account_id: 7)
+
+      assert_select "[data-notification-id]", 0
+    end
   end
 end
