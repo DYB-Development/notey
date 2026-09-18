@@ -39,5 +39,33 @@ module Notey
 
       assert_select "[data-notification-id]", 0
     end
+
+    test "marks the listed notifications as seen" do
+      member = Member.create!
+      notify(member)
+
+      get "/notey/notifications", headers: headers_for(member)
+
+      assert Noticed::Notification.last.seen?
+    end
+
+    test "shows a notification as read after a person marks it" do
+      member = Member.create!
+      notify(member)
+
+      patch "/notey/notifications/#{Noticed::Notification.last.id}", headers: headers_for(member)
+
+      assert Noticed::Notification.last.read?
+    end
+
+    test "shows how many notifications are unread in the current account" do
+      member = Member.create!
+      notify(member)
+      notify(member)
+
+      get "/notey/notifications", headers: headers_for(member)
+
+      assert_select "body", text: /2 unread/
+    end
   end
 end
