@@ -44,5 +44,13 @@ module Notey
 
       assert_select "input[type=checkbox][value=sms][checked]", false
     end
+
+    test "preselects the default for a person who has set nothing" do
+      Notey.catalog { notification :comment, channels: %w[email sms], default: %w[email] }
+
+      get "/notey/preferences", headers: headers_for(Member.create!)
+
+      assert_select "input[type=checkbox][value=email][checked]"
+    end
   end
 end
