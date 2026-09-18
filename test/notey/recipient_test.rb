@@ -40,5 +40,11 @@ module Notey
 
       assert_equal %w[email], member.channels_for("comment")
     end
+
+    test "arrives immediately for a person who has set nothing" do
+      Current.account_id = 7
+
+      assert_equal "immediate", Member.create!.digest_window_for("comment")
+    end
   end
 end

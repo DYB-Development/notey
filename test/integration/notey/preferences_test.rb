@@ -61,5 +61,16 @@ module Notey
 
       assert_empty Preference.last&.channels || []
     end
+
+    test "keeps the window a person chose for a notification type" do
+      Notey.catalog { notification :comment, channels: %w[email], default: %w[email] }
+      member = Member.create!
+
+      patch "/notey/preferences",
+        params: { preferences: { comment: %w[email] }, windows: { comment: "daily" } },
+        headers: headers_for(member)
+
+      assert_equal "daily", Preference.last.digest_window
+    end
   end
 end

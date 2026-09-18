@@ -10,7 +10,12 @@ module Notey
   end
 
   def self.wanted(notification_type, on:)
-    -> { recipient.wants?(notification_type, on: on, account_id: event.account_id) }
+    lambda do
+      account_id = event.account_id
+
+      recipient.digest_window_for(notification_type, account_id: account_id) == "immediate" &&
+        recipient.wants?(notification_type, on: on, account_id: account_id)
+    end
   end
 
   def self.reset!

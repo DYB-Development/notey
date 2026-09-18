@@ -54,5 +54,29 @@ module Notey
 
       assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
     end
+
+    test "sends nothing at the moment it happens when the type is set to daily" do
+      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment",
+        channels: %w[test], digest_window: "daily")
+      Current.account_id = 7
+
+      perform_enqueued_jobs { CommentNotifier.deliver(member) }
+
+      assert_empty Noticed::DeliveryMethods::Test.delivered
+    end
+
+    test "keeps sending a type set to immediate" do
+      Notey.catalog { notification :comment, channels: %w[test], default: [] }
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment",
+        channels: %w[test], digest_window: "immediate")
+      Current.account_id = 7
+
+      perform_enqueued_jobs { CommentNotifier.deliver(member) }
+
+      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
+    end
   end
 end

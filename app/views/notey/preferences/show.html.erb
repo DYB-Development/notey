@@ -13,6 +13,11 @@
               <%= channel.humanize %>
             </label>
           <% end %>
+          <%= ui_select(
+                name: "windows[#{name}]",
+                options: [ [ "Immediately", "immediate" ], [ "Once a day", "daily" ], [ "Once a week", "weekly" ] ],
+                selected: Notey::Current.member.digest_window_for(name)
+              ) %>
         <% end %>
       <% end %>
       <%= ui_button(label: "Save") %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_010740) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_020001) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -20,6 +20,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_010740) do
     t.bigint "account_id", null: false
     t.json "channels", default: [], null: false
     t.datetime "created_at", null: false
+    t.string "digest_window", default: "immediate", null: false
     t.integer "member_id", null: false
     t.string "member_type", null: false
     t.string "notification_type", null: false
