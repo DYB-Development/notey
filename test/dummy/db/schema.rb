@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_060001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_010001) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
@@ -23,8 +23,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_060001) do
     t.string "channel", null: false
     t.datetime "created_at", null: false
     t.text "credential"
+    t.integer "member_id"
+    t.string "member_type"
     t.datetime "updated_at", null: false
-    t.index ["account_id", "channel"], name: "index_notey_destinations_on_account_id_and_channel", unique: true
+    t.index ["member_type", "member_id", "account_id", "channel"], name: "index_notey_destinations_unique", unique: true
+    t.index ["member_type", "member_id"], name: "index_notey_destinations_on_member"
   end
 
   create_table "notey_digests", force: :cascade do |t|
