@@ -18,6 +18,16 @@ module Notey
       assert_equal %w[sms], Preference.last.channels
     end
 
+    test "turns every channel off when the form sends none" do
+      Notey.catalog { notification :comment, channels: %w[email], default: %w[email] }
+      member = Member.create!
+
+      SavePreferences.new(person: member, account: 7,
+        values: { preferences: { "comment" => [ "" ] } }).call
+
+      assert_empty Preference.last.channels
+    end
+
     test "refuses a window notey does not send on" do
       Notey.catalog { notification :comment, channels: %w[email], default: [] }
 

@@ -4,6 +4,7 @@
   <% Notey.catalog.notifications.each do |name, notification| %>
     <%= ui_panel do %>
       <%= ui_section(title: name.humanize) do %>
+        <%= hidden_field_tag "preferences[#{name}][]", "", id: nil %>
         <% notification.channels.each do |channel| %>
           <%= ui_checkbox_row(
                 name: "preferences[#{name}][]",
