@@ -28,19 +28,17 @@ module Notey
       assert_equal %w[sms], member.channels_for("comment")
     end
 
-    test "falls back to the declared default for a type the person never set" do
-      Notey.catalog { notification :comment, default: %w[email] }
+    test "falls back to the channels that are on for a type the person never set" do
       Current.account_id = 7
 
-      assert_equal %w[email], Member.create!.channels_for("comment")
+      assert_equal %w[email in_app], Member.create!.channels_for("comment").sort
     end
 
     test "returns the declared default when no account is set" do
       member = Member.create!
-      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[sms])
-      Notey.catalog { notification :comment, default: %w[email] }
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[email])
 
-      assert_equal %w[email], member.channels_for("comment")
+      assert_equal %w[email in_app], member.channels_for("comment").sort
     end
 
     test "arrives immediately for a person who has set nothing" do

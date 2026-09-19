@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-class ThingHappenedNotifier < Noticed::Event
+class InAppNotifier < Noticed::Event
   include Notey::Notifier
   notey_type :comment
-
-  recipients { Member.where(id: params[:member_ids]) }
 
   deliver_by :in_app, class: "RecordingDeliveryMethod" do |config|
     config.if = Notey.wanted(:comment, on: :in_app)

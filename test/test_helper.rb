@@ -17,12 +17,25 @@ if ActiveSupport::TestCase.respond_to?(:fixture_paths=)
 end
 
 class ActiveSupport::TestCase
+  setup do
+    RecordingDeliveryMethod.sent = []
+    Noticed::DeliveryMethods::Test.delivered = []
+    Rails.application.eager_load!
+    [ CommentNotifier, MentionNotifier, HookNotifier, ThingHappenedNotifier, InAppNotifier, EmailedNotifier ].each do |notifier|
+      Notey.register_notifier(notifier)
+    end
+  end
+
   def notifier_delivering(notification_type, *channels)
     Class.new(Noticed::Event) do
       include Notey::Notifier
       notey_type notification_type
 
-      channels.each { |channel| deliver_by channel, class: "RecordingDeliveryMethod" }
+      channels.each do |channel|
+        deliver_by channel, class: "RecordingDeliveryMethod" do |config|
+          config.if = Notey.wanted(notification_type, on: channel)
+        end
+      end
     end
   end
 end

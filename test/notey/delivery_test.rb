@@ -65,13 +65,13 @@ module Notey
       assert_equal 1, Noticed::Notification.where(recipient: member).count
     end
 
-    test "delivers on the declared default when nobody set a preference" do
-      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
+    test "delivers on a channel that is on before anyone chooses" do
+      RecordingDeliveryMethod.sent = []
       Current.account_id = 7
 
-      perform_enqueued_jobs { CommentNotifier.deliver(Member.create!) }
+      perform_enqueued_jobs { InAppNotifier.deliver(Member.create!) }
 
-      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
+      assert_equal 1, RecordingDeliveryMethod.sent.size
     end
 
     test "sends nothing at the moment it happens when the type is set to daily" do

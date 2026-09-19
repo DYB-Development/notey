@@ -7,6 +7,7 @@ module Notey
     teardown { Notey.reset! }
 
     test "holds every channel the notifiers deliver on" do
+      Notey.forget_notifiers
       Notey.register_notifier(notifier_delivering(:comment, :email))
       Notey.register_notifier(notifier_delivering(:mention, :sms))
 
@@ -14,6 +15,7 @@ module Notey
     end
 
     test "holds every notification type the notifiers declare" do
+      Notey.forget_notifiers
       Notey.register_notifier(notifier_delivering(:comment, :email))
       Notey.register_notifier(notifier_delivering(:mention, :sms))
 
