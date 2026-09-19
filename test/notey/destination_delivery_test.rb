@@ -27,6 +27,16 @@ module Notey
       assert_equal [ "https://seven.example.com" ], RecordingDeliveryMethod.sent
     end
 
+    test "sends to the address the person stored over the account's" do
+      member = Member.create!
+      Destination.create!(account_id: 7, channel: "recording", address: "https://account.example.com")
+      Destination.create!(account_id: 7, channel: "recording", member: member, address: "https://mine.example.com")
+
+      notify(member)
+
+      assert_equal [ "https://mine.example.com" ], RecordingDeliveryMethod.sent
+    end
+
     test "sends nothing on a channel the account stored no destination for" do
       notify(Member.create!)
 

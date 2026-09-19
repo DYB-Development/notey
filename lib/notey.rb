@@ -69,11 +69,11 @@ module Notey
   end
 
   def self.destination_address(channel)
-    -> { Destinations.for(event.account_id, channel)&.address }
+    -> { Destinations.for(event.account_id, channel, member: recipient)&.address }
   end
 
   def self.addressed(channel)
-    -> { Destinations.for(event.account_id, channel).present? }
+    -> { Destinations.for(event.account_id, channel, member: recipient).present? }
   end
 
   def self.deliver_on(event_name, notifier)
