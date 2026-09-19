@@ -1,4 +1,4 @@
-<% stored = Notey::Destination.where(account_id: account).index_by(&:channel) %>
+<% stored = Notey::Destination.where(account_id: account, member_id: nil).index_by(&:channel) %>
 
 <%= ui_form(action: submit_url, method: :patch) do %>
   <% Notey.catalog.channels.each do |channel| %>
