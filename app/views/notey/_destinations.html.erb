@@ -1,7 +1,7 @@
 <% stored = Notey::Destination.where(account_id: account, member_id: nil).index_by(&:channel) %>
 
 <%= ui_form(action: submit_url, method: :patch) do %>
-  <% Notey.catalog.channels.each do |channel| %>
+  <% Notey.catalog.addressed.each do |channel| %>
     <%= ui_panel do %>
       <%= ui_section(title: channel.humanize) do %>
         <%= ui_input(name: "destinations[#{channel}][address]", value: stored[channel]&.address) %>
