@@ -32,6 +32,10 @@ module Notey
     @notifiers ||= []
   end
 
+  def self.channels
+    notifiers.flat_map { |notifier| notifier.delivery_methods.keys.map(&:to_s) }.uniq
+  end
+
   def self.forget_notifiers
     @notifiers = []
   end
