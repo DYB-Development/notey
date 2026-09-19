@@ -18,6 +18,16 @@ module Notey
       assert_equal "https://x.example.com", Destination.last.address
     end
 
+    test "keeps an address against the person who set it" do
+      Notey.catalog { notification :comment, channels: %w[webhook], default: [] }
+      member = Member.create!
+
+      SaveMyDestination.new(person: member, account: 7,
+        values: { destinations: { "webhook" => { "address" => "https://mine.example.com" } } }).call
+
+      assert_equal member, Destination.last.member
+    end
+
     test "keeps a stored credential when the box is left empty" do
       Notey.catalog { notification :comment, channels: %w[webhook], default: [] }
       Destination.create!(account_id: 7, channel: "webhook",

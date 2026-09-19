@@ -181,9 +181,35 @@ releases the window so it can be sent again.
 
 ## Destinations
 
-An account stores an address and a credential per channel on
-`/notey/destinations`, and a notifier reads them through the options Noticed
-already evaluates:
+A channel like email reaches a person at an address the app already holds. A
+channel like SMS, a webhook, Slack or Discord does not, so somebody has to say
+where it goes. Declare which channels take an address:
+
+```ruby
+Notey.catalog do
+  notification :comment, channels: %w[email sms], default: %w[email]
+  addressed :sms
+end
+```
+
+**A person sets their own.** Their phone number, their endpoint. A notification
+addressed to them goes only to an address they set — never to one the account
+set.
+
+```ruby
+Bureau.section :my_notification_addresses, area: :user, title: "Where notifications reach me",
+  renders: "notey/my_destinations", runs: "Notey::SaveMyDestination"
+```
+
+**An account sets its own**, for notifications that belong to the whole account
+rather than to one person — a team Slack or Discord channel.
+
+```ruby
+Bureau.section :notification_destinations, area: :account, title: "Notification destinations",
+  renders: "notey/destinations", runs: "Notey::SaveDestination", capability: :configure_site
+```
+
+A notifier reads the address through the options Noticed already evaluates:
 
 ```ruby
 deliver_by :webhook do |config|
@@ -192,12 +218,11 @@ deliver_by :webhook do |config|
 end
 ```
 
-The credential is encrypted at rest, which needs Active Record encryption keys
-configured in your app. A channel with no destination for that account sends
-nothing on it.
+A credential is encrypted at rest, which needs Active Record encryption keys
+configured in your app. A channel with no address set sends nothing on it.
 
-**Nothing in this engine restricts who may set a destination.** Gate
-`/notey/destinations` in your own app.
+**Nothing in this engine restricts who may set an account's address.** Register
+it as a settings section so the shell's capability check guards it.
 
 ## Domain events
 
