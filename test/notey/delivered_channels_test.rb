@@ -12,5 +12,12 @@ module Notey
 
       assert_equal %w[email sms], Notey.channels.sort
     end
+
+    test "holds every notification type the notifiers declare" do
+      Notey.register_notifier(notifier_delivering(:comment, :email))
+      Notey.register_notifier(notifier_delivering(:mention, :sms))
+
+      assert_equal %w[comment mention], Notey.notification_types.sort
+    end
   end
 end
