@@ -6,6 +6,13 @@ module Notey
 
     def initialize
       @notifications = {}
+      @addressed = []
+    end
+
+    def addressed(*channels)
+      return @addressed if channels.empty?
+
+      @addressed |= channels.map(&:to_s)
     end
 
     def notification(name, channels: [], default: [])
