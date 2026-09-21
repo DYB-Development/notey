@@ -4,12 +4,7 @@ require "test_helper"
 
 module Notey
   class CheckTest < ActiveSupport::TestCase
-    setup do
-      Rails.application.eager_load!
-      [ CommentNotifier, MentionNotifier, HookNotifier, ThingHappenedNotifier ].each do |notifier|
-        Notey.register_notifier(notifier)
-      end
-    end
+    setup { Rails.application.eager_load! }
 
     teardown { Notey.reset! }
 
@@ -18,7 +13,7 @@ module Notey
 
       error = assert_raises(Notey::UndeclaredType) { Notey.check! }
 
-      assert_match(/MentionNotifier.*mention/, error.message)
+      assert_match(/MentionNotification.*mention/, error.message)
     end
 
     test "passes when every declared type and channel is delivered" do
@@ -32,7 +27,7 @@ module Notey
 
     test "forgets the notifiers when everything is reset" do
       registered = Notey.notifiers.dup
-      Class.new(Noticed::Event) { include Notey::Notifier }
+      notification_type_named(:invented)
 
       Notey.reset!
 
@@ -43,7 +38,7 @@ module Notey
 
     test "forgets the notifiers it registered" do
       registered = Notey.notifiers.dup
-      Class.new(Noticed::Event) { include Notey::Notifier }
+      notification_type_named(:invented)
 
       Notey.forget_notifiers
 

@@ -8,7 +8,8 @@ module Notey
 
     test "gives a person in-app and email before they choose" do
       Notey.forget_notifiers
-      Notey.register_notifier(notifier_delivering(:comment, :email, :in_app, :sms))
+      Notey.register_notifier(notification_type_named(:comment))
+      Notey.channel(:sms)
 
       found = Channels.for(Member.create!, "comment", account_id: 7)
 

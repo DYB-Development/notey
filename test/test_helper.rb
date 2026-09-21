@@ -21,23 +21,14 @@ class ActiveSupport::TestCase
     RecordingDeliveryMethod.sent = []
     Noticed::DeliveryMethods::Test.delivered = []
     Rails.application.eager_load!
-    [ CommentNotifier, MentionNotifier, HookNotifier, ThingHappenedNotifier, InAppNotifier, EmailedNotifier ].each do |notifier|
-      Notey.register_notifier(notifier)
+    [ CommentNotification, MentionNotification ].each do |type|
+      Notey.register_notifier(type)
     end
     Notey.channel(:test, delivery_method: "Noticed::DeliveryMethods::Test")
     Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
   end
 
-  def notifier_delivering(notification_type, *channels)
-    Class.new(Noticed::Event) do
-      include Notey::Notifier
-      notey_type notification_type
-
-      channels.each do |channel|
-        deliver_by channel, class: "RecordingDeliveryMethod" do |config|
-          config.if = Notey.wanted(notification_type, on: channel)
-        end
-      end
-    end
+  def notification_type_named(name)
+    Class.new(Notey::Notification) { notey_type name }
   end
 end
