@@ -46,5 +46,25 @@ module Notey
 
       assert_equal 7, Noticed::Notification.last.account_id
     end
+
+    test "sends nothing on a channel the recipient turned off" do
+      member = recipient_wanting
+
+      perform_enqueued_jobs { NoteyNotifications.new.handle(thing_happened(member_ids: [ member.id ])) }
+
+      assert_empty RecordingDeliveryMethod.sent
+    end
+
+    test "sends nothing for an event no subscriber handles" do
+      member = recipient_wanting(:webhook)
+
+      perform_enqueued_jobs do
+        EventEngine::Subscribers::Registry.subscribers_for(:nobody_handles_this).each do |subscriber|
+          subscriber.new.handle(thing_happened(member_ids: [ member.id ]))
+        end
+      end
+
+      assert_empty RecordingDeliveryMethod.sent
+    end
   end
 end
