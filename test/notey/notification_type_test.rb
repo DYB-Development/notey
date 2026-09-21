@@ -28,5 +28,12 @@ module Notey
 
       assert_equal %i[sms], type.delivery_methods.keys
     end
+
+    test "sends a channel with the delivery method its registration named" do
+      Notey.channel(:sms, delivery_method: "RecordingDeliveryMethod")
+      type = Class.new(Notey::Notification) { notey_type :comment }
+
+      assert_equal RecordingDeliveryMethod, type.delivery_methods[:sms].constant
+    end
   end
 end
