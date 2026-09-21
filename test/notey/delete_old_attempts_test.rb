@@ -29,5 +29,13 @@ module Notey
 
       assert_empty Attempt.all
     end
+
+    test "keeps a record inside the period the host keeps" do
+      attempt_recorded(29)
+
+      DeleteOldAttempts.new.call
+
+      assert_equal 1, Attempt.count
+    end
   end
 end
