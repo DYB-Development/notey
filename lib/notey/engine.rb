@@ -13,6 +13,8 @@ module Notey
       ActiveSupport::Reloader.before_class_unload { Notey.forget_notifiers }
     end
 
+    config.to_prepare { Noticed::DeliveryMethod.include(Notey::RecordsAttempt) }
+
     config.after_initialize { |app| Notey.check! if app.config.eager_load }
   end
 end
