@@ -41,5 +41,11 @@ module Notey
         CommentNotification.with(nothing: true).deliver(Member.create!)
       end
     end
+
+    test "presents the name it declares as its title when it presents no other" do
+      type = Class.new(Notey::Notification) { notey_type :comment }
+
+      assert_equal "Comment", type.new(params: {}).title
+    end
   end
 end
