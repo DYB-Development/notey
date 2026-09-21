@@ -35,5 +35,11 @@ module Notey
 
       assert_equal RecordingDeliveryMethod, type.delivery_methods[:sms].constant
     end
+
+    test "refuses a call that omits information it requires" do
+      assert_raises(Noticed::ValidationError) do
+        CommentNotification.with(nothing: true).deliver(Member.create!)
+      end
+    end
   end
 end
