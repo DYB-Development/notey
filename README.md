@@ -15,8 +15,8 @@ leaves to the host.
 
 ## What Notey adds
 
-- **A catalog.** One declaration naming every notification type, the channels it
-  may be delivered on, and the channels a person gets by default.
+- **Channels.** One registration per channel the application can send on, made
+  once for the whole application rather than on every notification.
 - **Preferences.** Which channels a person wants for each type, per account,
   with a page they set them on.
 - **Digest windows.** A type set to daily or weekly is held back and sent as one
@@ -24,8 +24,8 @@ leaves to the host.
 - **An inbox.** In-app notification pages scoped to the account the person is in.
 - **Destinations.** An address and an encrypted credential per account per
   channel, so an account points a channel at its own workspace or endpoint.
-- **Domain events.** A mapping from an event your app already publishes to the
-  notifier that should deliver it.
+- **Notification types.** A class describing what a notification carries and
+  nothing about how it is sent.
 
 ## Installation
 
@@ -54,19 +54,20 @@ That gives you `/notey/preferences`, `/notey/notifications` and
 Notey owns its own tables and never owns your person or account records. Six
 things connect it to yours.
 
-### 1. Declare the catalog
+### 1. Register the channels your application has
 
-Nothing works until a type is declared. A preference for an undeclared type is
-refused, a channel the catalog does not offer for a type is refused, and a
-notifier naming an undeclared type raises when the app boots.
+Every application has email and in-app without registering anything. Register a
+channel for anything else you send on, once, for the whole application.
 
 ```ruby
 # config/initializers/notey.rb
-Notey.catalog do
-  notification :comment, channels: %w[email sms], default: %w[email]
-  notification :mention, channels: %w[email], default: []
-end
+Notey.channel :sms, delivery_method: "Noticed::DeliveryMethods::TwilioMessaging", addressed: true
 ```
+
+A registration names the channel, the delivery method that sends it, and whether
+it needs an address before anything can go out on it. Nothing else names a
+channel: a notification type does not, and a person's preferences offer exactly
+what is registered.
 
 ### 2. Make your person model a recipient
 
@@ -113,22 +114,40 @@ ActiveSupport.on_load :noticed_event do
 end
 ```
 
-### 5. Point your notifiers at the catalog
+### 5. Define a notification type
 
-Each notifier names its type, and each delivery method asks whether the
-recipient wants that channel.
+A notification type describes what the notification carries and says nothing
+about channels. Notey decides which channels each recipient gets.
 
 ```ruby
-class CommentNotifier < Noticed::Event
-  include Notey::Notifier
+class CommentNotification < Notey::Notification
   notey_type :comment
 
-  deliver_by :email do |config|
-    config.mailer = "CommentMailer"
-    config.if = Notey.wanted(:comment, on: :email)
+  required_params :comment_id
+
+  def title
+    "New comment"
+  end
+
+  def body
+    "Someone replied to you"
   end
 end
 ```
+
+`notey_type` is the name a person's stored preferences are keyed by, so renaming
+the class does not orphan what they chose. Send it by naming the recipients your
+own code resolved:
+
+```ruby
+CommentNotification.notify(recipients, comment_id: comment.id)
+```
+
+Notey builds the delivery list from the registered channels each time, so a
+channel registered later needs no change here. For each recipient and each
+channel it answers three things before sending: the person wants that channel
+for that type, their window is immediate, and they have an address if the
+channel needs one.
 
 ### 6. Tell Notey where a notification lives
 
@@ -183,13 +202,10 @@ releases the window so it can be sent again.
 
 A channel like email reaches a person at an address the app already holds. A
 channel like SMS, a webhook, Slack or Discord does not, so somebody has to say
-where it goes. Declare which channels take an address:
+where it goes. Say so when you register the channel:
 
 ```ruby
-Notey.catalog do
-  notification :comment, channels: %w[email sms], default: %w[email]
-  addressed :sms
-end
+Notey.channel :sms, delivery_method: "Noticed::DeliveryMethods::TwilioMessaging", addressed: true
 ```
 
 **A person sets their own.** Their phone number, their endpoint. A notification
@@ -209,12 +225,14 @@ Bureau.section :notification_destinations, area: :account, title: "Notification 
   renders: "notey/destinations", runs: "Notey::SaveDestination", capability: :configure_site
 ```
 
-A notifier reads the address through the options Noticed already evaluates:
+Notey sends nothing on an addressed channel until the person has set an address.
+The delivery method reads that address when it sends:
 
 ```ruby
-deliver_by :webhook do |config|
-  config.url = Notey.destination_address(:webhook)
-  config.if = Notey.addressed(:webhook)
+class WebhookDeliveryMethod < Noticed::DeliveryMethod
+  def deliver
+    post_to Notey::Destinations.for(event.account_id, :webhook, member: recipient).address
+  end
 end
 ```
 
@@ -226,13 +244,9 @@ it as a settings section so the shell's capability check guards it.
 
 ## Domain events
 
-Notey does not depend on any event pipeline. It holds the mapping from an event
-name to a notifier, and your app owns the one class that knows both.
-
-```ruby
-# config/initializers/notey.rb
-Notey.deliver_on :comment_posted, CommentNotifier
-```
+Notey does not depend on any event pipeline and holds no mapping from an event
+to a notification. Your subscriber resolves who should hear about something and
+calls the notification type.
 
 ```ruby
 # app/subscribers/notey_notifications.rb
@@ -240,14 +254,17 @@ class NoteyNotifications < EventEngine::Subscribers::Base
   subscribes_to :comment_posted
 
   def handle(event)
-    Notey::EventDelivery.call(event)
+    payload = event.payload.to_h.symbolize_keys
+
+    Notey::Current.set(account_id: payload[:account_id]) do
+      CommentNotification.notify(User.where(id: payload[:user_ids]), comment_id: payload[:comment_id])
+    end
   end
 end
 ```
 
-`Notey::EventDelivery.call` takes anything answering `event_name` and `payload`,
-sets the account from the payload for the delivery, and restores the account it
-found. An event with no mapping does nothing.
+Who receives a notification is decided outside notey; how each of them receives
+it is decided inside.
 
 ## Development
 
