@@ -138,10 +138,17 @@ module Notey
   end
 
   def self.wanted(notification_type, on:)
+    sends(notification_type, on: on)
+  end
+
+  def self.sends(notification_type, on:, addressed: false)
     lambda do
       decision = Channels.decision_for(recipient, notification_type, account_id: event.account_id)
 
-      decision.window == "immediate" && decision.channels.include?(on.to_s)
+      next false unless decision.window == "immediate" && decision.channels.include?(on.to_s)
+      next true unless addressed
+
+      Destinations.for(event.account_id, on, member: recipient).present?
     end
   end
 
