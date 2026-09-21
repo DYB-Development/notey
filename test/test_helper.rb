@@ -24,8 +24,6 @@ class ActiveSupport::TestCase
     [ CommentNotifier, MentionNotifier, HookNotifier, ThingHappenedNotifier, InAppNotifier, EmailedNotifier ].each do |notifier|
       Notey.register_notifier(notifier)
     end
-    Notey.channel(:email)
-    Notey.channel(:in_app)
     Notey.channel(:test, delivery_method: "Noticed::DeliveryMethods::Test")
     Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
   end

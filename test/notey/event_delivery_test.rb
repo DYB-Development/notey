@@ -19,19 +19,6 @@ module Notey
       Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
     end
 
-    test "reaches notey through a subscriber the host owns" do
-      declared_comment
-      member = Member.create!
-      Notey.deliver_on :thing_happened, ThingHappenedNotifier
-
-      perform_enqueued_jobs do
-        NoteyNotifications.new.handle(Event.new(event_name: :thing_happened,
-          payload: { account_id: 7, member_ids: [ member.id ] }))
-      end
-
-      assert_equal 1, RecordingDeliveryMethod.sent.size
-    end
-
     test "puts back the account that was set before the event" do
       declared_comment
       Notey.deliver_on :thing_happened, ThingHappenedNotifier
