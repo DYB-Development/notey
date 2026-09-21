@@ -24,5 +24,11 @@ module Notey
 
       assert_empty Attempt.all
     end
+
+    test "still emails a person who does have an email address" do
+      perform_enqueued_jobs { CommentNotification.notify(Member.create!(email: "person@example.com"), comment_id: 1) }
+
+      assert_equal 1, ActionMailer::Base.deliveries.size
+    end
   end
 end
