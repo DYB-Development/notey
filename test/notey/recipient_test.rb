@@ -19,7 +19,7 @@ module Notey
     end
 
     test "holds different channels for the same person in two accounts" do
-      Notey.catalog { notification :comment, channels: %w[email sms], default: [] }
+      Notey.channel(:sms)
       member = Member.create!
       Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[email])
       Preference.create!(member: member, account_id: 8, notification_type: "comment", channels: %w[sms])

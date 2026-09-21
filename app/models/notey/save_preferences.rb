@@ -17,7 +17,7 @@ module Notey
     private
 
     def chosen
-      @values.fetch(:preferences, {}).select { |type, _| Notey.catalog.declared?(type) }
+      @values.fetch(:preferences, {}).select { |type, _| Notey.notification_types.include?(type.to_s) }
     end
 
     def windows

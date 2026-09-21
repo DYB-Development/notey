@@ -13,12 +13,8 @@ module Notey
     private
 
     def channels_offered_for_notification_type
-      return unless Notey.catalog.declared?(notification_type)
-
-      offered = Notey.catalog.channels_for(notification_type)
-
-      (Array(channels).map(&:to_s) - offered).each do |unoffered|
-        errors.add(:channels, "is not offered for #{notification_type}: #{unoffered}")
+      (Array(channels).map(&:to_s) - Notey.channels).each do |unoffered|
+        errors.add(:channels, "is not a channel this application has: #{unoffered}")
       end
     end
   end

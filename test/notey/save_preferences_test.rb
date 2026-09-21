@@ -10,7 +10,7 @@ module Notey
     end
 
     test "keeps the channels a person chose for a type" do
-      Notey.catalog { notification :comment, channels: %w[email sms], default: [] }
+      Notey.channel(:sms)
       member = Member.create!
 
       SavePreferences.new(person: member, account: 7, values: { preferences: { "comment" => %w[sms] } }).call
