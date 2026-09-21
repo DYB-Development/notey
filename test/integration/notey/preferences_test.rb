@@ -20,12 +20,7 @@ module Notey
       count
     end
 
-    test "reads a person's preferences once however many types the catalog declares" do
-      Notey.catalog do
-        notification :comment, channels: %w[email sms], default: %w[email]
-        notification :mention, channels: %w[email sms], default: %w[email]
-        notification :invite, channels: %w[email sms], default: %w[email]
-      end
+    test "reads a person's preferences once however many types the application has" do
       member = Member.create!
 
       queries = preference_queries { get "/notey/preferences", headers: headers_for(member) }
@@ -33,11 +28,7 @@ module Notey
       assert_equal 1, queries
     end
 
-    test "lists every notification type the app declares" do
-      Notey.catalog do
-        notification :comment, channels: %w[email], default: %w[email]
-        notification :mention, channels: %w[email], default: []
-      end
+    test "lists every notification type the application has" do
       member = Member.create!
 
       get "/notey/preferences", headers: headers_for(member)
@@ -56,7 +47,7 @@ module Notey
     end
 
     test "shows choices for the account the person is in and not another" do
-      Notey.catalog { notification :comment, channels: %w[email sms], default: [] }
+      Notey.channel(:sms)
       member = Member.create!
 
       patch "/notey/preferences", params: { preferences: { comment: %w[sms] } }, headers: headers_for(member, account_id: 7)
@@ -66,15 +57,12 @@ module Notey
     end
 
     test "preselects the default for a person who has set nothing" do
-      Notey.catalog { notification :comment, channels: %w[email sms], default: %w[email] }
-
       get "/notey/preferences", headers: headers_for(Member.create!)
 
       assert_select "input[type=checkbox][value=email][checked]"
     end
 
-    test "refuses a channel the catalog does not offer for that type" do
-      Notey.catalog { notification :comment, channels: %w[email], default: [] }
+    test "refuses a channel the application does not have" do
       member = Member.create!
 
       patch "/notey/preferences", params: { preferences: { comment: %w[sms] } }, headers: headers_for(member)
@@ -83,7 +71,6 @@ module Notey
     end
 
     test "keeps the window a person chose for a notification type" do
-      Notey.catalog { notification :comment, channels: %w[email], default: %w[email] }
       member = Member.create!
 
       patch "/notey/preferences",
@@ -93,9 +80,7 @@ module Notey
       assert_equal "daily", Preference.last.digest_window
     end
 
-    test "ignores a notification type the catalog does not declare" do
-      Notey.catalog { notification :comment, channels: %w[email], default: %w[email] }
-
+    test "ignores a notification type the application does not have" do
       patch "/notey/preferences",
         params: { preferences: { invented: %w[email] } },
         headers: headers_for(Member.create!)
@@ -104,8 +89,6 @@ module Notey
     end
 
     test "shows the page again when a preference does not save" do
-      Notey.catalog { notification :comment, channels: %w[email], default: [] }
-
       patch "/notey/preferences",
         params: { preferences: { comment: %w[email] }, windows: { comment: "fortnightly" } },
         headers: headers_for(Member.create!)
