@@ -19,5 +19,11 @@ module Notey
 
       assert_empty Notey.registered_channels
     end
+
+    test "records the delivery method that sends a channel" do
+      Notey.channel(:sms, delivery_method: "TwilioDeliveryMethod")
+
+      assert_equal "TwilioDeliveryMethod", Notey.registered_channels.first.delivery_method
+    end
   end
 end
