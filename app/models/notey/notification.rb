@@ -13,6 +13,10 @@ module Notey
       self.notey_notification_type = name.to_s
     end
 
+    def self.notify(recipients, **information)
+      with(information).deliver(recipients)
+    end
+
     def self.delivery_methods
       Notey.registered_channels.to_h do |channel|
         [ channel.name.to_sym, Noticed::Deliverable::DeliverBy.new(channel.name.to_sym, delivery_config(channel)) ]
