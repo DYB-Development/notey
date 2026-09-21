@@ -14,18 +14,19 @@ module Notey
       end
     end
 
+    def self.delivery_config(channel)
+      config = ActiveSupport::OrderedOptions.new
+      config[:class] = channel.delivery_method if channel.delivery_method
+      config
+    end
+    private_class_method :delivery_config
+
     def title
       notey_notification_type.humanize
     end
 
     def body
       nil
-    end
-
-    def self.delivery_config(channel)
-      config = ActiveSupport::OrderedOptions.new
-      config[:class] = channel.delivery_method if channel.delivery_method
-      config
     end
   end
 end
