@@ -4,6 +4,11 @@ module Notey
   class Notification < Noticed::Event
     class_attribute :notey_notification_type, instance_writer: false
 
+    def self.inherited(subclass)
+      super
+      Notey.register_notifier(subclass)
+    end
+
     def self.notey_type(name)
       self.notey_notification_type = name.to_s
     end
@@ -17,6 +22,7 @@ module Notey
     def self.delivery_config(channel)
       config = ActiveSupport::OrderedOptions.new
       config[:class] = channel.delivery_method if channel.delivery_method
+      config[:if] = Notey.wanted(notey_notification_type, on: channel.name)
       config
     end
     private_class_method :delivery_config
