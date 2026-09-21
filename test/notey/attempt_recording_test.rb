@@ -66,5 +66,13 @@ module Notey
 
       assert_equal 1, RecordingDeliveryMethod.sent.size
     end
+
+    test "loses the records of what was sent when the notification is deleted" do
+      perform_enqueued_jobs { CommentNotification.notify(recipient_wanting(:webhook), comment_id: 1) }
+
+      Noticed::Notification.last.destroy
+
+      assert_empty Attempt.all
+    end
   end
 end
