@@ -35,7 +35,7 @@ module Notey
       assert_equal "sekrit", Destination.last.credential
     end
 
-    test "ignores a channel the catalog does not offer" do
+    test "ignores a channel that needs no address" do
       Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
 
       patch "/notey/destinations",
