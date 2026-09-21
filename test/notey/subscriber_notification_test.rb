@@ -38,5 +38,13 @@ module Notey
 
       assert_equal 1, RecordingDeliveryMethod.sent.size
     end
+
+    test "records the notification against the account the event names" do
+      member = recipient_wanting(:webhook)
+
+      perform_enqueued_jobs { NoteyNotifications.new.handle(thing_happened(member_ids: [ member.id ])) }
+
+      assert_equal 7, Noticed::Notification.last.account_id
+    end
   end
 end
