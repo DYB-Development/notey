@@ -33,8 +33,10 @@ different notifications in each.
   through it.
 - `Notey.notification_url=` — takes a lambda returning the host's own url for
   one notification, used to link the rows in a digest email.
-- `Notey.check!` — raises when notey has no sender address for its digests, and
-  notey runs it itself after initialization when the app eager loads.
+- `Notey.check!` — raises when a registered channel names a delivery method that
+  does not exist or needs an option notey does not supply, and when notey has no
+  sender address for its digests. notey runs it itself after initialization when
+  the app eager loads.
 - `/notey/preferences` — the page a person picks their channels and their
   immediate, daily or weekly window on, per notification type.
 - `/notey/notifications` — the person's inbox for the account they are in, 25
@@ -150,9 +152,9 @@ moves all three.
    set, a digest still sends and its rows are plain text instead of links.
 
 10. Boot the app with eager loading on and watch it raise or come up. notey runs
-    `Notey.check!` itself at that point, which refuses to run with no sender
-    address for its digests; call it directly in a test or a console to check
-    the same thing without a boot.
+    `Notey.check!` itself at that point, which refuses a channel that cannot
+    send and refuses to run with no sender address for its digests; call it
+    directly in a test or a console to check the same thing without a boot.
 
 11. Decide the pages' layout. They render in notey's own layout, which loads
     notey's stylesheet and nothing of the host's, unless the host defines
@@ -176,9 +178,10 @@ moves all three.
   Reads fall back to email and in-app when `Notey::Current.account_id` is nil
   and a save is refused, so check step 6 before anything else.
 - **A registration for a channel notey already has replaces it.** Registering
-  `:email` with no delivery method leaves notey's own email delivery behind and
-  nothing sends on it, so register a channel notey supplies only to replace it
-  deliberately.
+  `:email` with no delivery method leaves notey's own email delivery behind, and
+  the app refuses to boot rather than sending nothing, so register a channel
+  notey supplies only to replace it deliberately and with a delivery method that
+  can send.
 - **Authentication on the three pages is the host's.** Its controllers inherit
   from the host's `ApplicationController`, so the host's own filters run and
   notey adds no authorization of its own — restricting who may set an account's
