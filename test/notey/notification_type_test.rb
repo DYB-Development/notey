@@ -53,5 +53,11 @@ module Notey
 
       assert_nil type.new(params: {}).body
     end
+
+    test "is one of the notification types the application has" do
+      Class.new(Notey::Notification) { notey_type :comment }
+
+      assert_includes Notey.notification_types, "comment"
+    end
   end
 end
