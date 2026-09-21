@@ -59,5 +59,14 @@ module Notey
 
       assert_match(/already sent/, error.message)
     end
+
+    test "refuses a channel the application no longer has" do
+      attempt = failed_attempt
+      Notey.reset!
+
+      error = assert_raises(Notey::UnsendableAttempt) { attempt.send_again }
+
+      assert_match(/flaky/, error.message)
+    end
   end
 end

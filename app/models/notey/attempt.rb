@@ -7,7 +7,8 @@ module Notey
     def send_again
       raise UnsendableAttempt, "#{channel} was already sent for this notification" if state == "sent"
 
-      delivery = notification.event.class.delivery_methods.fetch(channel.to_sym)
+      delivery = notification.event.class.delivery_methods[channel.to_sym]
+      raise UnsendableAttempt, "#{channel} is not a channel this application has" if delivery.nil?
 
       destroy
       delivery.perform_later(notification)
