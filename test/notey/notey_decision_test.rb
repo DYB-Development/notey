@@ -8,6 +8,7 @@ module Notey
 
     setup do
       Notey.reset!
+      Notey.register_notifier(CommentNotification)
       Notey.channel(:test, delivery_method: "Noticed::DeliveryMethods::Test")
       Noticed::DeliveryMethods::Test.delivered = []
       Current.account_id = 7
@@ -25,6 +26,15 @@ module Notey
       perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
 
       assert_empty Noticed::DeliveryMethods::Test.delivered
+    end
+
+    test "delivers on a channel the recipient's stored preference names" do
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[test])
+
+      perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
+
+      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
     end
   end
 end
