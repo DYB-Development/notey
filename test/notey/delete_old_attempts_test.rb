@@ -37,5 +37,15 @@ module Notey
 
       assert_equal 1, Attempt.count
     end
+
+    test "leaves the same records when it runs a second time" do
+      attempt_recorded(31)
+      attempt_recorded(29)
+      DeleteOldAttempts.new.call
+
+      DeleteOldAttempts.new.call
+
+      assert_equal 1, Attempt.count
+    end
   end
 end
