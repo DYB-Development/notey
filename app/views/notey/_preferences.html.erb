@@ -1,11 +1,11 @@
 <% stored = Notey::Preference.where(member: person, account_id: account).index_by(&:notification_type) %>
 
 <%= ui_form(action: submit_url, method: :patch) do %>
-  <% Notey.catalog.notifications.each do |name, notification| %>
+  <% Notey.notification_types.each do |name| %>
     <%= ui_panel do %>
       <%= ui_section(title: name.humanize) do %>
         <%= hidden_field_tag "preferences[#{name}][]", "", id: nil %>
-        <% notification.channels.each do |channel| %>
+        <% Notey.channels.each do |channel| %>
           <%= ui_checkbox_row(
                 name: "preferences[#{name}][]",
                 value: channel,

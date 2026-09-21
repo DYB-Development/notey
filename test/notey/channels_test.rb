@@ -10,7 +10,7 @@ module Notey
     end
 
     test "answers the channels a person stored for a type in an account" do
-      Notey.catalog { notification :comment, channels: %w[email sms], default: %w[email] }
+      Notey.channel(:sms)
       member = Member.create!
       Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[sms])
 

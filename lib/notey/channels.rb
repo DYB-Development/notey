@@ -23,10 +23,10 @@ module Notey
       decision_for(member, notification_type, account_id: account_id).window
     end
 
-    def self.channels_of(preference, notification_type)
+    def self.channels_of(preference, _notification_type)
       return Array(preference.channels).map(&:to_s) if preference
 
-      Notey.catalog.default_channels_for(notification_type)
+      Notey.default_channels
     end
 
     def self.window_of(preference)

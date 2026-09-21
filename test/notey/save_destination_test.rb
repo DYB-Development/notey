@@ -10,7 +10,7 @@ module Notey
     end
 
     test "keeps the address an account set for a channel" do
-      Notey.catalog { notification :comment, channels: %w[webhook], default: [] }
+      Notey.channel(:webhook, addressed: true)
 
       SaveDestination.new(person: Member.create!, account: 7,
         values: { destinations: { "webhook" => { "address" => "https://x.example.com" } } }).call
@@ -19,7 +19,7 @@ module Notey
     end
 
     test "keeps an address against the person who set it" do
-      Notey.catalog { notification :comment, channels: %w[webhook], default: [] }
+      Notey.channel(:webhook, addressed: true)
       member = Member.create!
 
       SaveMyDestination.new(person: member, account: 7,
@@ -29,7 +29,7 @@ module Notey
     end
 
     test "keeps a stored credential when the box is left empty" do
-      Notey.catalog { notification :comment, channels: %w[webhook], default: [] }
+      Notey.channel(:webhook, addressed: true)
       Destination.create!(account_id: 7, channel: "webhook",
         address: "https://x.example.com", credential: "sekrit")
 

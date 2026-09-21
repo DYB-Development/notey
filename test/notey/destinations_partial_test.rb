@@ -9,11 +9,12 @@ module Notey
 
     teardown { Notey.reset! }
 
-    test "draws an address box for every channel the catalog offers" do
-      Notey.catalog do
-        notification :comment, channels: %w[email webhook slack], default: []
-        addressed :webhook, :slack
-      end
+    setup { Notey.reset! }
+
+    test "draws an address box for every channel that needs an address" do
+      Notey.channel(:webhook, addressed: true)
+      Notey.channel(:slack, addressed: true)
+      Notey.channel(:plain)
 
       render partial: "notey/destinations",
         locals: { person: Member.create!, account: 7, selection: {}, submit_url: "/settings" }
@@ -22,10 +23,7 @@ module Notey
     end
 
     test "shows the account's address and not a person's" do
-      Notey.catalog do
-        notification :comment, channels: %w[webhook], default: []
-        addressed :webhook
-      end
+      Notey.channel(:webhook, addressed: true)
       member = Member.create!
       Destination.create!(account_id: 7, channel: "webhook", member: member, address: "https://mine.example.com")
 
