@@ -129,6 +129,7 @@ module Notey
   def self.reset!
     @catalog = nil
     @event_notifiers = nil
+    @registered_channels = nil
     forget_notifiers
   end
 end

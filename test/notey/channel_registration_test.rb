@@ -11,5 +11,13 @@ module Notey
 
       assert_equal %w[sms], Notey.registered_channels.map(&:name)
     end
+
+    test "forgets the channels it registered when notey is reset" do
+      Notey.channel(:sms)
+
+      Notey.reset!
+
+      assert_empty Notey.registered_channels
+    end
   end
 end
