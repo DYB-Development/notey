@@ -10,9 +10,9 @@ require "notey/digest_run"
 module Notey
   ALWAYS_ON = %w[email in_app].freeze
 
-  RegisteredChannel = Struct.new(:name, :delivery_method, keyword_init: true) do
+  RegisteredChannel = Struct.new(:name, :delivery_method, :addressed, keyword_init: true) do
     def addressed?
-      false
+      addressed == true
     end
   end
 
@@ -52,8 +52,10 @@ module Notey
     channels & ALWAYS_ON
   end
 
-  def self.channel(name, delivery_method: nil)
-    registered_channels << RegisteredChannel.new(name: name.to_s, delivery_method: delivery_method)
+  def self.channel(name, delivery_method: nil, addressed: false)
+    registered_channels << RegisteredChannel.new(
+      name: name.to_s, delivery_method: delivery_method, addressed: addressed
+    )
   end
 
   def self.registered_channels

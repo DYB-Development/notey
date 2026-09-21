@@ -31,5 +31,11 @@ module Notey
 
       refute_predicate Notey.registered_channels.first, :addressed?
     end
+
+    test "records that a channel needs an address" do
+      Notey.channel(:sms, addressed: true)
+
+      assert_predicate Notey.registered_channels.first, :addressed?
+    end
   end
 end
