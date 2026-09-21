@@ -30,5 +30,13 @@ module Notey
 
       assert_equal 1, ActionMailer::Base.deliveries.size
     end
+
+    test "still reaches the other people when one of them cannot be reached" do
+      reachable = Member.create!(email: "person@example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify([ Member.create!, reachable ], comment_id: 1) }
+
+      assert_equal 1, ActionMailer::Base.deliveries.size
+    end
   end
 end
