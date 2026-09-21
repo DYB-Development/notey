@@ -45,5 +45,15 @@ module Notey
 
       assert_equal 1, RecordingDeliveryMethod.sent.size
     end
+
+    test "sends nothing at the moment it happens when the recipient's window is daily" do
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment",
+        channels: %w[test], digest_window: "daily")
+
+      perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
+
+      assert_empty Noticed::DeliveryMethods::Test.delivered
+    end
   end
 end
