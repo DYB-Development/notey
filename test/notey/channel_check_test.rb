@@ -22,5 +22,19 @@ module Notey
 
       assert_match(/mailer/, error.message)
     end
+
+    test "refuses a registration that replaces email with one that cannot send" do
+      Notey.channel(:email)
+
+      error = assert_raises(Notey::UnsendableChannel) { Notey.check! }
+
+      assert_match(/email/, error.message)
+    end
+
+    test "starts when every registration can send" do
+      Notey.channel(:webhook, delivery_method: "RecordingDeliveryMethod")
+
+      assert_nothing_raised { Notey.check! }
+    end
   end
 end
