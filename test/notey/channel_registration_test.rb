@@ -37,5 +37,11 @@ module Notey
 
       assert_predicate Notey.registered_channels.first, :addressed?
     end
+
+    test "records the options the delivery method requires" do
+      Notey.channel(:sms, delivery_method: "TwilioDeliveryMethod", options: { from: "+15550000" })
+
+      assert_equal({ from: "+15550000" }, Notey.registered_channels.first.options)
+    end
   end
 end
