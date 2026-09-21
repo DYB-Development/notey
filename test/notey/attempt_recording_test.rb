@@ -51,5 +51,11 @@ module Notey
 
       assert_equal %w[webhook], Attempt.pluck(:channel)
     end
+
+    test "records nothing for a person's in-app notification" do
+      perform_enqueued_jobs { CommentNotification.notify(recipient_wanting(:in_app), comment_id: 1) }
+
+      assert_empty Attempt.all
+    end
   end
 end

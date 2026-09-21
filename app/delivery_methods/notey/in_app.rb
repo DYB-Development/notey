@@ -4,5 +4,9 @@ module Notey
   class InApp < Noticed::DeliveryMethod
     def deliver
     end
+
+    def outbound?
+      false
+    end
   end
 end

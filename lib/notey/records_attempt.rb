@@ -8,9 +8,13 @@ module Notey
       around_deliver :record_attempt
     end
 
+    def outbound?
+      true
+    end
+
     def record_attempt
       channel = config[:notey_channel]
-      return yield if channel.blank?
+      return yield if channel.blank? || !outbound?
 
       attempt = Attempt.create!(notification: notification, channel: channel)
 
