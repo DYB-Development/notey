@@ -49,5 +49,15 @@ module Notey
 
       assert_equal "sent", Attempt.last.state
     end
+
+    test "refuses an attempt already recorded as sent" do
+      attempt = failed_attempt
+      FailingDeliveryMethod.failing = false
+      perform_enqueued_jobs { attempt.send_again }
+
+      error = assert_raises(Notey::UnsendableAttempt) { Attempt.last.send_again }
+
+      assert_match(/already sent/, error.message)
+    end
   end
 end
