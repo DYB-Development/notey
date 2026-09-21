@@ -57,5 +57,14 @@ module Notey
 
       assert_empty Attempt.all
     end
+
+    test "sends nothing the second time the same notification goes on the same channel" do
+      perform_enqueued_jobs { CommentNotification.notify(recipient_wanting(:webhook), comment_id: 1) }
+      notification = Noticed::Notification.last
+
+      perform_enqueued_jobs { CommentNotification.delivery_methods[:webhook].perform_later(notification) }
+
+      assert_equal 1, RecordingDeliveryMethod.sent.size
+    end
   end
 end

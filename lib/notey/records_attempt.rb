@@ -16,7 +16,8 @@ module Notey
       channel = config[:notey_channel]
       return yield if channel.blank? || !outbound?
 
-      attempt = Attempt.create!(notification: notification, channel: channel)
+      attempt = claim_attempt(channel)
+      return if attempt.nil?
 
       begin
         yield
@@ -25,6 +26,12 @@ module Notey
         attempt.update!(state: "failed", failure: error.message)
         raise
       end
+    end
+
+    def claim_attempt(channel)
+      Attempt.create!(notification: notification, channel: channel)
+    rescue ActiveRecord::RecordNotUnique
+      nil
     end
   end
 end
