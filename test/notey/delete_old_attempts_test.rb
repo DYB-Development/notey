@@ -47,5 +47,13 @@ module Notey
 
       assert_equal 1, Attempt.count
     end
+
+    test "refuses to run when the host has set no period" do
+      Notey.attempt_retention = nil
+
+      error = assert_raises(Notey::MissingRetention) { DeleteOldAttempts.new.call }
+
+      assert_match(/attempt_retention/, error.message)
+    end
   end
 end
