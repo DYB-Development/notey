@@ -198,6 +198,26 @@ Each run enqueues one job per person, so one failing send does not stop the
 rest. A window is sent once even if the run overlaps itself; a send that fails
 releases the window so it can be sent again.
 
+## Deleting old delivery records
+
+Notey writes one record per notification per channel that leaves the
+application, and nothing deletes them on its own. Say how long to keep them:
+
+```ruby
+# config/initializers/notey.rb
+Notey.attempt_retention = 90.days
+```
+
+Then run the deletion on a schedule, the way you run the digest windows:
+
+```ruby
+Notey::DeleteOldAttempts.new.call
+```
+
+Everything older than the period goes and everything inside it stays, so
+running it twice leaves the same records as running it once. With no period set
+it refuses to run rather than deleting nothing quietly.
+
 ## Destinations
 
 A channel like email reaches a person at an address the app already holds. A

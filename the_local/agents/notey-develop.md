@@ -2,7 +2,7 @@
 name: notey-develop
 description: Use PROACTIVELY for defining a notification type, sending one to the recipients your own code resolved, sending one when a domain event fires, addressing a channel at a person, scheduling daily and weekly digest runs, reading a person's inbox, and reading their channels and window — MUST BE USED instead of hand-rolling preference checks, per-person delivery addresses, or a digest loop.
 tools: Read, Write, Edit, Grep
-scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel
+scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel that the host keeps for a period it sets
 ---
 
 This local follows the steps below exactly and invents no others. Where a step
@@ -40,6 +40,9 @@ This local assumes the gem is already hooked into the app; if it is not, that is
 - `Notey::DigestRun` — sends one window's digests, with `call` for everyone on
   that window and `deliver_to_member(member, account_id)` for one person in one
   account.
+- `Notey::DeleteOldAttempts` — deletes every record of what was sent that is
+  older than `Notey.attempt_retention`, and refuses to run when no retention is
+  set.
 - `Notey::Inbox.for(member, account_id:)` — returns that person's notifications
   for that account, as a relation.
 - `wants?(type, on:, account_id:)` — on the recipient model, true when that
@@ -133,7 +136,21 @@ This local assumes the gem is already hooked into the app; if it is not, that is
    in this app — cron, a scheduler gem, or a platform scheduler — and at what
    hour each window should go out.
 
-7. Read a person's notifications through the inbox rather than querying Noticed
+7. Schedule the deletion of old delivery records alongside the windows:
+
+   ```ruby
+   Notey::DeleteOldAttempts.new.call
+   ```
+
+   notey writes one record per notification per channel that leaves the
+   application and deletes none of them on its own, so a host that never runs
+   this keeps every row forever. It deletes everything older than
+   `Notey.attempt_retention` and refuses to run when that is not set, which
+   `notey-install` is the step that sets. Running it twice leaves the same
+   records as running it once, so a schedule that overlaps itself is safe. Ask
+   the developer how often it should run.
+
+8. Read a person's notifications through the inbox rather than querying Noticed
    directly:
 
    ```ruby
@@ -143,7 +160,7 @@ This local assumes the gem is already hooked into the app; if it is not, that is
    It returns a relation, so chain `.unread`, `.order` and `.limit` onto it. With
    no account it returns an empty relation, never another account's rows.
 
-8. Read a person's preferences from the host's own code when the app needs to
+9. Read a person's preferences from the host's own code when the app needs to
    branch on them:
 
    ```ruby
@@ -156,7 +173,7 @@ This local assumes the gem is already hooked into the app; if it is not, that is
    three read a person's stored row for that type, and fall back to email and
    in-app when they have never stored one.
 
-9. In tests that register their own channels or notification types, call
+10. In tests that register their own channels or notification types, call
    `Notey.reset!` in teardown. Both are held for the life of the process, so a
    test that skips this leaves its channels and types in place for every test
    after it.
@@ -185,7 +202,7 @@ This local assumes the gem is already hooked into the app; if it is not, that is
   no row saying it went out.
 - **Notification types, subscribers and digest schedules all belong in the
   host's code**, never in the gem.
-- **Out of scope.** Registering the channels the application has, making a model
-  a recipient, setting the current person and account, storing an account's
-  addresses, and the pages a person picks their own channels on all belong to
-  `notey-install`.
+- **Out of scope.** Registering the channels the application has, setting how
+  long delivery records are kept, making a model a recipient, setting the
+  current person and account, storing an account's addresses, and the pages a
+  person picks their own channels on all belong to `notey-install`.
