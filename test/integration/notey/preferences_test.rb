@@ -46,7 +46,7 @@ module Notey
     end
 
     test "keeps a channel choice after a reload" do
-      Notey.catalog { notification :comment, channels: %w[email sms], default: %w[email] }
+      Notey.channel(:sms)
       member = Member.create!
 
       patch "/notey/preferences", params: { preferences: { comment: %w[sms] } }, headers: headers_for(member)
