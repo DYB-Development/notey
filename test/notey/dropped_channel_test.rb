@@ -32,5 +32,29 @@ module Notey
 
       assert_equal %w[webhook], Channels.for(member, "comment", account_id: 7)
     end
+
+    test "sends nothing on a channel the application no longer has" do
+      member = recipient_stored_with(:carrier_pigeon)
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_empty RecordingDeliveryMethod.sent
+    end
+
+    test "still sends on the channels the application does have" do
+      member = recipient_stored_with(:webhook, :carrier_pigeon)
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_equal 1, RecordingDeliveryMethod.sent.size
+    end
+
+    test "keeps the stored preference rather than deleting it" do
+      member = recipient_stored_with(:webhook, :carrier_pigeon)
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_equal %w[webhook carrier_pigeon], Preference.last.channels
+    end
   end
 end
