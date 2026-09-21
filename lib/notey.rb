@@ -8,6 +8,8 @@ require "notey/inbox"
 require "notey/digest_run"
 
 module Notey
+  ALWAYS_ON = %w[email in_app].freeze
+
   class UndeclaredType < StandardError; end
   class UndeliverableChannel < StandardError; end
   class MissingSender < StandardError; end
@@ -30,6 +32,18 @@ module Notey
 
   def self.notifiers
     @notifiers ||= []
+  end
+
+  def self.channels
+    notifiers.flat_map { |notifier| notifier.delivery_methods.keys.map(&:to_s) }.uniq
+  end
+
+  def self.notification_types
+    notifiers.filter_map(&:notey_notification_type).uniq
+  end
+
+  def self.default_channels
+    channels & ALWAYS_ON
   end
 
   def self.forget_notifiers

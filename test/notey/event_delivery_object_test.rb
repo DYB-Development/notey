@@ -8,7 +8,7 @@ module Notey
 
     Event = Struct.new(:event_name, :payload, keyword_init: true)
 
-    setup { Noticed::DeliveryMethods::Test.delivered = [] }
+    setup { RecordingDeliveryMethod.sent = [] }
 
     teardown do
       Current.reset
@@ -25,7 +25,7 @@ module Notey
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
-      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
+      assert_equal 1, RecordingDeliveryMethod.sent.size
     end
   end
 end

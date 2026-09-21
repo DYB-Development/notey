@@ -8,7 +8,7 @@ module Notey
 
     Event = Struct.new(:event_name, :payload, keyword_init: true)
 
-    setup { Noticed::DeliveryMethods::Test.delivered = [] }
+    setup { RecordingDeliveryMethod.sent = [] }
 
     teardown do
       Current.reset
@@ -29,7 +29,7 @@ module Notey
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
-      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
+      assert_equal 1, RecordingDeliveryMethod.sent.size
     end
 
     test "puts back the account that was set before the event" do
@@ -55,7 +55,7 @@ module Notey
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
-      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
+      assert_equal 1, RecordingDeliveryMethod.sent.size
     end
 
     test "scopes the notification to the account named on the event" do
@@ -80,7 +80,7 @@ module Notey
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
-      assert_empty Noticed::DeliveryMethods::Test.delivered
+      assert_empty RecordingDeliveryMethod.sent
     end
 
     test "honours the recipient's channel preferences" do
@@ -94,7 +94,7 @@ module Notey
           payload: { account_id: 7, member_ids: [ member.id ] }))
       end
 
-      assert_empty Noticed::DeliveryMethods::Test.delivered
+      assert_empty RecordingDeliveryMethod.sent
     end
   end
 end

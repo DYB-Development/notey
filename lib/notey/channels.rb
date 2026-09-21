@@ -5,12 +5,12 @@ module Notey
     Decision = Struct.new(:channels, :window, keyword_init: true)
 
     def self.decision_for(member, notification_type, account_id:)
-      return Decision.new(channels: [], window: "immediate") unless Notey.catalog.declared?(notification_type)
+      return Decision.new(channels: [], window: "immediate") unless Notey.notification_types.include?(notification_type.to_s)
 
       stored = stored_for(member, notification_type, account_id)
 
       Decision.new(
-        channels: stored ? Array(stored.channels).map(&:to_s) : Notey.catalog.default_channels_for(notification_type),
+        channels: stored ? Array(stored.channels).map(&:to_s) : Notey.default_channels,
         window: stored&.digest_window || "immediate"
       )
     end

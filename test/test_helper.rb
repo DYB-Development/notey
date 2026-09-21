@@ -15,3 +15,27 @@ if ActiveSupport::TestCase.respond_to?(:fixture_paths=)
   ActiveSupport::TestCase.file_fixture_path = File.expand_path("fixtures", __dir__) + "/files"
   ActiveSupport::TestCase.fixtures :all
 end
+
+class ActiveSupport::TestCase
+  setup do
+    RecordingDeliveryMethod.sent = []
+    Noticed::DeliveryMethods::Test.delivered = []
+    Rails.application.eager_load!
+    [ CommentNotifier, MentionNotifier, HookNotifier, ThingHappenedNotifier, InAppNotifier, EmailedNotifier ].each do |notifier|
+      Notey.register_notifier(notifier)
+    end
+  end
+
+  def notifier_delivering(notification_type, *channels)
+    Class.new(Noticed::Event) do
+      include Notey::Notifier
+      notey_type notification_type
+
+      channels.each do |channel|
+        deliver_by channel, class: "RecordingDeliveryMethod" do |config|
+          config.if = Notey.wanted(notification_type, on: channel)
+        end
+      end
+    end
+  end
+end
