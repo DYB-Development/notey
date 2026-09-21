@@ -2,7 +2,7 @@
 name: notey-install
 description: Use to hook notey into a project — installing its tables, mounting its engine, registering the channels the application can send on, making a model a recipient, setting the current person and account, putting the account on Noticed's rows, supplying a notification url, and reaching the preferences, inbox and destinations pages.
 tools: Bash, Read, Edit
-scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel
+scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel that the host keeps for a period it sets
 ---
 
 This local follows the steps below exactly and invents no others. Where a step
@@ -33,6 +33,9 @@ different notifications in each.
   through it.
 - `Notey.notification_url=` — takes a lambda returning the host's own url for
   one notification, used to link the rows in a digest email.
+- `Notey.attempt_retention=` — takes how long notey keeps the record of what it
+  sent on each channel, such as `90.days`. Nothing is deleted until the host
+  runs the deletion.
 - `Notey.check!` — raises when a registered channel names a delivery method that
   does not exist or needs an option notey does not supply, and when notey has no
   sender address for its digests. notey runs it itself after initialization when
@@ -162,7 +165,18 @@ moves all three.
     the engine's copy. Ask the developer whether these pages should carry the
     app's navigation.
 
-12. Set up destinations only if a registered channel needs an address. The stored credential is encrypted, so
+12. Set the retention for delivery records in
+    `config/initializers/notey.rb`:
+
+    ```ruby
+    Notey.attempt_retention = 90.days
+    ```
+
+    Ask the developer how long this application should keep the record of what
+    was sent on each channel; there is no default. Scheduling the deletion is
+    `notey-develop`'s step, and nothing is deleted until it runs.
+
+13. Set up destinations only if a registered channel needs an address. The stored credential is encrypted, so
     Active Record encryption keys must be configured in the host's credentials
     (`bin/rails db:encryption:init` generates a set) or saving a destination
     raises. Ask the developer whether any channel needs this before doing it.
@@ -190,6 +204,10 @@ moves all three.
   that changes it.
 - **Re-run `bin/rails notey:install:migrations` after upgrading the gem.** It
   copies only the migrations the host does not already have.
-- **Out of scope.** Scheduling the digest runs, writing a notification type,
+- **Nothing deletes a delivery record until the host runs the deletion.** The
+  table grows for every notification on every outbound channel, so a host that
+  sets no retention and schedules no deletion keeps every row forever.
+- **Out of scope.** Scheduling the digest runs and the deletion of old delivery
+  records, writing a notification type,
   sending one when a domain event fires, and reading the inbox from the host's
   own code all belong to `notey-develop`.

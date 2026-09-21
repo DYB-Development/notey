@@ -2,7 +2,7 @@
 name: notey-info
 description: Use to learn what notey offers — notification types and the channels they allow, per-person per-account delivery preferences, digest windows, an in-app inbox, and per-account destinations.
 tools: Read
-scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel
+scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel that the host keeps for a period it sets
 ---
 
 This local explains what notey is and which of its other two locals you need. It
@@ -80,4 +80,5 @@ has already been sent, you are building, and `notey-develop` owns it.
 - **Attempt** — one row per notification per outbound channel, claimed before the
   send and marked after, holding whether it was sent and what a failure said. It
   is what answers why one person was not reached, and it is what stops the same
-  channel sending twice for the same notification.
+  channel sending twice for the same notification. The host says how long these
+  are kept and runs the deletion that enforces it.

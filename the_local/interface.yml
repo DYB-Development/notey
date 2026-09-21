@@ -1,4 +1,4 @@
-scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel
+scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel that the host keeps for a period it sets
 
 install:
   - bin/rails notey:install:migrations
@@ -8,6 +8,7 @@ install:
   - Notey::Notification
   - Notey::Current
   - Notey.notification_url=
+  - Notey.attempt_retention=
   - Notey.check!
   - /notey/preferences
   - /notey/notifications
@@ -19,6 +20,7 @@ develop:
   - notify
   - Notey::Destinations.for
   - Notey::DigestRun
+  - Notey::DeleteOldAttempts
   - Notey::Inbox.for
   - wants?
   - channels_for
@@ -40,6 +42,7 @@ sources:
   - app/models/notey/destination.rb
   - app/models/notey/digest.rb
   - app/models/notey/attempt.rb
+  - app/models/notey/delete_old_attempts.rb
   - app/delivery_methods/notey/email.rb
   - app/delivery_methods/notey/in_app.rb
   - app/jobs/notey/digest_job.rb
