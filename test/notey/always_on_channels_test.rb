@@ -10,5 +10,11 @@ module Notey
     test "has email and in-app without the application registering them" do
       assert_equal %w[email in_app], Notey.channels.sort
     end
+
+    test "keeps email and in-app alongside a channel the application registers" do
+      Notey.channel(:sms)
+
+      assert_equal %w[email in_app sms], Notey.channels.sort
+    end
   end
 end

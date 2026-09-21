@@ -42,11 +42,5 @@ module Notey
 
       assert_predicate registered("sms"), :addressed?
     end
-
-    test "lists the channels the application registered without any notification type" do
-      Notey.channel(:sms)
-
-      assert_equal %w[email in_app sms], Notey.channels.sort
-    end
   end
 end
