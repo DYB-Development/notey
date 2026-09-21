@@ -87,7 +87,11 @@ module Notey
   end
 
   def self.check_channel!(channel)
-    delivery_method_for(channel)
+    required = delivery_method_for(channel).required_option_names
+    return if required.empty?
+
+    raise UnsendableChannel,
+      "the channel #{channel.name} needs the option #{required.first}, which notey does not supply"
   end
 
   def self.delivery_method_for(channel)
