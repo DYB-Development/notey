@@ -2,11 +2,18 @@
 
 module Notey
   class DeleteOldAttempts
-    def call
-      raise MissingRetention, "notey deletes delivery records older than attempt_retention, which is not set" if
-        Notey.attempt_retention.nil?
+    UNSET = "notey deletes delivery records older than attempt_retention, which is not set"
 
-      Attempt.where(created_at: ...Notey.attempt_retention.ago).delete_all
+    def call
+      raise MissingRetention, UNSET if retention.nil?
+
+      Attempt.where(created_at: ...retention.ago).delete_all
+    end
+
+    private
+
+    def retention
+      Notey.attempt_retention
     end
   end
 end
