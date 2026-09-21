@@ -40,5 +40,14 @@ module Notey
 
       assert_equal 1, FailingDeliveryMethod.sent.size
     end
+
+    test "records an attempt that was sent again as sent" do
+      attempt = failed_attempt
+      FailingDeliveryMethod.failing = false
+
+      perform_enqueued_jobs { attempt.send_again }
+
+      assert_equal "sent", Attempt.last.state
+    end
   end
 end
