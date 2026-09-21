@@ -90,18 +90,6 @@ module Notey
     raise MissingSender, "notey sends digests by email and no mailer_sender is set"
   end
 
-  def self.destination_address(channel)
-    -> { Destinations.for(event.account_id, channel, member: recipient)&.address }
-  end
-
-  def self.addressed(channel)
-    -> { Destinations.for(event.account_id, channel, member: recipient).present? }
-  end
-
-  def self.wanted(notification_type, on:)
-    sends(notification_type, on: on)
-  end
-
   def self.sends(notification_type, on:, addressed: false)
     lambda do
       decision = Channels.decision_for(recipient, notification_type, account_id: event.account_id)
