@@ -27,5 +27,13 @@ module Notey
 
       assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
     end
+
+    test "records one notification for each of many recipients" do
+      members = Array.new(3) { Member.create! }
+
+      CommentNotification.notify(members, comment_id: 1)
+
+      assert_equal 3, Noticed::Notification.where(recipient: members).count
+    end
   end
 end
