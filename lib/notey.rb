@@ -22,6 +22,7 @@ module Notey
 
   class << self
     attr_writer :notification_url, :mailer_sender
+    attr_accessor :attempt_retention
   end
 
   def self.mailer_sender
