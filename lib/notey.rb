@@ -8,7 +8,8 @@ require "notey/inbox"
 require "notey/digest_run"
 
 module Notey
-  ALWAYS_ON = %w[email in_app].freeze
+  ALWAYS_ON_DELIVERY = { "email" => "Notey::Email", "in_app" => "Notey::InApp" }.freeze
+  ALWAYS_ON = ALWAYS_ON_DELIVERY.keys.freeze
 
   RegisteredChannel = Struct.new(:name, :delivery_method, :addressed, keyword_init: true) do
     def addressed?
@@ -53,13 +54,25 @@ module Notey
   end
 
   def self.channel(name, delivery_method: nil, addressed: false)
-    registered_channels << RegisteredChannel.new(
+    host_channels << RegisteredChannel.new(
       name: name.to_s, delivery_method: delivery_method, addressed: addressed
     )
   end
 
   def self.registered_channels
-    @registered_channels ||= []
+    always_on_channels + host_channels
+  end
+
+  def self.always_on_channels
+    ALWAYS_ON_DELIVERY.filter_map do |name, delivery_method|
+      next if host_channels.any? { |channel| channel.name == name }
+
+      RegisteredChannel.new(name: name, delivery_method: delivery_method)
+    end
+  end
+
+  def self.host_channels
+    @host_channels ||= []
   end
 
   def self.forget_notifiers
@@ -135,7 +148,7 @@ module Notey
   def self.reset!
     @catalog = nil
     @event_notifiers = nil
-    @registered_channels = nil
+    @host_channels = nil
     forget_notifiers
   end
 end

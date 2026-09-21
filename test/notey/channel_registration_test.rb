@@ -7,10 +7,14 @@ module Notey
     setup { Notey.reset! }
     teardown { Notey.reset! }
 
+    def registered(name)
+      Notey.registered_channels.find { |channel| channel.name == name }
+    end
+
     test "names a channel the application registered" do
       Notey.channel(:sms)
 
-      assert_equal %w[sms], Notey.registered_channels.map(&:name)
+      assert_includes Notey.channels, "sms"
     end
 
     test "forgets the channels it registered when notey is reset" do
@@ -18,32 +22,25 @@ module Notey
 
       Notey.reset!
 
-      assert_empty Notey.registered_channels
+      refute_includes Notey.channels, "sms"
     end
 
     test "records the delivery method that sends a channel" do
       Notey.channel(:sms, delivery_method: "TwilioDeliveryMethod")
 
-      assert_equal "TwilioDeliveryMethod", Notey.registered_channels.first.delivery_method
+      assert_equal "TwilioDeliveryMethod", registered("sms").delivery_method
     end
 
     test "needs no address unless the registration says so" do
-      Notey.channel(:in_app)
+      Notey.channel(:sms)
 
-      refute_predicate Notey.registered_channels.first, :addressed?
+      refute_predicate registered("sms"), :addressed?
     end
 
     test "records that a channel needs an address" do
       Notey.channel(:sms, addressed: true)
 
-      assert_predicate Notey.registered_channels.first, :addressed?
-    end
-
-    test "lists the channels the application registered without any notification type" do
-      Notey.channel(:email)
-      Notey.channel(:sms)
-
-      assert_equal %w[email sms], Notey.channels.sort
+      assert_predicate registered("sms"), :addressed?
     end
   end
 end

@@ -1,0 +1,6 @@
+<h1><%= @notification.event.title %></h1>
+
+<p><%= @notification.event.body %></p>
+
+<% url = Notey.notification_url.call(@notification) %>
+<%= link_to "View it", url if url %>
