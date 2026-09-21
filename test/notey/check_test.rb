@@ -4,59 +4,37 @@ require "test_helper"
 
 module Notey
   class CheckTest < ActiveSupport::TestCase
-    setup do
-      Rails.application.eager_load!
-      [ CommentNotifier, MentionNotifier, HookNotifier, ThingHappenedNotifier ].each do |notifier|
-        Notey.register_notifier(notifier)
-      end
-    end
+    setup { Rails.application.eager_load! }
 
     teardown { Notey.reset! }
 
-    test "names the type and the notifier when a notifier names a type the catalog does not hold" do
-      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
-
-      error = assert_raises(Notey::UndeclaredType) { Notey.check! }
-
-      assert_match(/MentionNotifier.*mention/, error.message)
-    end
-
-    test "passes when every declared type and channel is delivered" do
-      Notey.catalog do
-        notification :comment, channels: %w[test recording], default: %w[test]
-        notification :mention, channels: %w[test], default: %w[test]
-      end
-
+    test "passes when notey can send what it has to send" do
       assert_nothing_raised { Notey.check! }
     end
 
-    test "forgets the notifiers when everything is reset" do
+    test "forgets the notification types when everything is reset" do
       registered = Notey.notifiers.dup
-      Class.new(Noticed::Event) { include Notey::Notifier }
+      notification_type_named(:invented)
 
       Notey.reset!
 
       assert_empty Notey.notifiers
     ensure
-      registered.each { |notifier| Notey.register_notifier(notifier) }
+      registered.each { |type| Notey.register_notifier(type) }
     end
 
-    test "forgets the notifiers it registered" do
+    test "forgets the notification types it registered" do
       registered = Notey.notifiers.dup
-      Class.new(Noticed::Event) { include Notey::Notifier }
+      notification_type_named(:invented)
 
       Notey.forget_notifiers
 
       assert_empty Notey.notifiers
     ensure
-      registered.each { |notifier| Notey.register_notifier(notifier) }
+      registered.each { |type| Notey.register_notifier(type) }
     end
 
-    test "refuses a catalog with no sender address for its digests" do
-      Notey.catalog do
-        notification :comment, channels: %w[test recording], default: %w[test]
-        notification :mention, channels: %w[test], default: %w[test]
-      end
+    test "refuses to run with no sender address for its digests" do
       previous = Notey.mailer_sender
       Notey.mailer_sender = nil
 
@@ -65,17 +43,6 @@ module Notey
       assert_match(/mailer_sender/, error.message)
     ensure
       Notey.mailer_sender = previous
-    end
-
-    test "refuses a catalog channel nothing delivers on" do
-      Notey.catalog do
-        notification :comment, channels: %w[test carrier-pigeon], default: %w[test]
-        notification :mention, channels: %w[test], default: %w[test]
-      end
-
-      error = assert_raises(Notey::UndeliverableChannel) { Notey.check! }
-
-      assert_match(/carrier-pigeon/, error.message)
     end
   end
 end

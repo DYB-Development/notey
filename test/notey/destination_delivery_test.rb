@@ -6,7 +6,12 @@ module Notey
   class DestinationDeliveryTest < ActiveSupport::TestCase
     include ActiveJob::TestHelper
 
-    setup { RecordingDeliveryMethod.sent = [] }
+    setup do
+      Notey.reset!
+      Notey.register_notifier(CommentNotification)
+      Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
+      RecordingDeliveryMethod.sent = []
+    end
 
     teardown do
       Current.reset
@@ -14,13 +19,14 @@ module Notey
     end
 
     def notify(member, account_id: 7)
-      Notey.catalog { notification :comment, channels: %w[recording], default: %w[recording] }
       Current.account_id = account_id
-      perform_enqueued_jobs { HookNotifier.deliver(member) }
+      Preference.find_or_create_by!(member: member, account_id: account_id, notification_type: "comment")
+        .update!(channels: %w[recording])
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
     end
 
     test "sends on a channel to the address that person set" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       Destination.create!(account_id: 7, channel: "recording", member: member, address: "https://mine.example.com")
 
       notify(member)
@@ -31,19 +37,19 @@ module Notey
     test "never sends a person's notification to an address the account set" do
       Destination.create!(account_id: 7, channel: "recording", address: "https://account.example.com")
 
-      notify(Member.create!)
+      notify(Member.create!(email: "person@example.com"))
 
       assert_empty RecordingDeliveryMethod.sent
     end
 
     test "sends nothing on a channel the person set no address for" do
-      notify(Member.create!)
+      notify(Member.create!(email: "person@example.com"))
 
       assert_empty RecordingDeliveryMethod.sent
     end
 
     test "never uses one account's address for another account's notification" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       Destination.create!(account_id: 7, channel: "recording", member: member, address: "https://mine.example.com")
 
       notify(member, account_id: 8)

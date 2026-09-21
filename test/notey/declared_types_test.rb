@@ -8,8 +8,8 @@ module Notey
 
     test "holds every notification type the notifiers declare" do
       Notey.forget_notifiers
-      Notey.register_notifier(notifier_delivering(:comment, :email))
-      Notey.register_notifier(notifier_delivering(:mention, :sms))
+      Notey.register_notifier(notification_type_named(:comment))
+      Notey.register_notifier(notification_type_named(:mention))
 
       assert_equal %w[comment mention], Notey.notification_types.sort
     end

@@ -14,7 +14,6 @@ module Notey
     end
 
     def member_with_daily_comment
-      Notey.catalog { notification :comment, channels: %w[email], default: [] }
       member = Member.create!(email: "person@example.com")
       Preference.create!(member: member, account_id: 7, notification_type: "comment",
         channels: %w[email], digest_window: "daily")
@@ -23,7 +22,7 @@ module Notey
 
     def notify(member, count)
       Current.account_id = 7
-      count.times { perform_enqueued_jobs { CommentNotifier.deliver(member) } }
+      count.times { perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) } }
     end
 
     test "sends one email covering a person's window" do
@@ -159,11 +158,6 @@ module Notey
 
     test "does not query more as a person's types in the window grow" do
       member = member_with_daily_comment
-      Notey.catalog do
-        notification :comment, channels: %w[email], default: []
-        notification :mention, channels: %w[email], default: []
-        notification :invite, channels: %w[email], default: []
-      end
       %w[mention invite].each do |type|
         Preference.create!(member: member, account_id: 7, notification_type: type,
           channels: %w[email], digest_window: "daily")
@@ -185,7 +179,6 @@ module Notey
     end
 
     test "sends a weekly window as one email" do
-      Notey.catalog { notification :comment, channels: %w[email], default: [] }
       member = Member.create!(email: "person@example.com")
       Preference.create!(member: member, account_id: 7, notification_type: "comment",
         channels: %w[email], digest_window: "weekly")
@@ -216,12 +209,12 @@ module Notey
 
     test "leaves out a notification the person set to immediate" do
       member = member_with_daily_comment
-      Notey.catalog { notification :mention, channels: %w[test], default: %w[test] }
+      Notey.channel(:test, delivery_method: "Noticed::DeliveryMethods::Test")
       Preference.create!(member: member, account_id: 7, notification_type: "mention",
         channels: %w[test], digest_window: "immediate")
       notify(member, 1)
       Current.account_id = 7
-      perform_enqueued_jobs { MentionNotifier.deliver(member) }
+      perform_enqueued_jobs { MentionNotification.notify(member, mention_id: 1) }
 
       perform_enqueued_jobs { DigestRun.new(window: "daily").call }
 

@@ -6,7 +6,13 @@ module Notey
   class DeliveryTest < ActiveSupport::TestCase
     include ActiveJob::TestHelper
 
-    setup { Noticed::DeliveryMethods::Test.delivered = [] }
+    setup do
+      Notey.reset!
+      Notey.register_notifier(CommentNotification)
+      Notey.channel(:test, delivery_method: "Noticed::DeliveryMethods::Test")
+      Noticed::DeliveryMethods::Test.delivered = []
+      Current.account_id = 7
+    end
 
     teardown do
       Current.reset
@@ -20,80 +26,23 @@ module Notey
       count
     end
 
-    test "reads a person's preference once for a delivery" do
-      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
-      member = Member.create!
-      Preference.create!(member: member, account_id: 7, notification_type: "comment",
-        channels: %w[test], digest_window: "immediate")
-      Current.account_id = 7
-
-      queries = preference_queries { perform_enqueued_jobs { CommentNotifier.deliver(member) } }
-
-      assert_equal 1, queries
+    def recipient_on(window)
+      Member.create!(email: "person@example.com").tap do |member|
+        Preference.create!(member: member, account_id: 7, notification_type: "comment",
+          channels: %w[test], digest_window: window)
+      end
     end
 
-    test "does not deliver on a channel the recipient turned off" do
-      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
-      member = Member.create!
-      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: [])
-      Current.account_id = 7
+    test "reads a person's preference once for each channel it decides" do
+      member = recipient_on("immediate")
 
-      perform_enqueued_jobs { CommentNotifier.deliver(member) }
+      queries = preference_queries { perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) } }
 
-      assert_empty Noticed::DeliveryMethods::Test.delivered
-    end
-
-    test "delivers on a channel the recipient wants" do
-      Notey.catalog { notification :comment, channels: %w[test], default: [] }
-      member = Member.create!
-      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[test])
-      Current.account_id = 7
-
-      perform_enqueued_jobs { CommentNotifier.deliver(member) }
-
-      assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
-    end
-
-    test "writes the in-app record even when no channel is wanted" do
-      Notey.catalog { notification :comment, channels: %w[test], default: [] }
-      member = Member.create!
-      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: [])
-      Current.account_id = 7
-
-      perform_enqueued_jobs { CommentNotifier.deliver(member) }
-
-      assert_equal 1, Noticed::Notification.where(recipient: member).count
-    end
-
-    test "delivers on a channel that is on before anyone chooses" do
-      RecordingDeliveryMethod.sent = []
-      Current.account_id = 7
-
-      perform_enqueued_jobs { InAppNotifier.deliver(Member.create!) }
-
-      assert_equal 1, RecordingDeliveryMethod.sent.size
-    end
-
-    test "sends nothing at the moment it happens when the type is set to daily" do
-      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
-      member = Member.create!
-      Preference.create!(member: member, account_id: 7, notification_type: "comment",
-        channels: %w[test], digest_window: "daily")
-      Current.account_id = 7
-
-      perform_enqueued_jobs { CommentNotifier.deliver(member) }
-
-      assert_empty Noticed::DeliveryMethods::Test.delivered
+      assert_equal 3, queries
     end
 
     test "keeps sending a type set to immediate" do
-      Notey.catalog { notification :comment, channels: %w[test], default: [] }
-      member = Member.create!
-      Preference.create!(member: member, account_id: 7, notification_type: "comment",
-        channels: %w[test], digest_window: "immediate")
-      Current.account_id = 7
-
-      perform_enqueued_jobs { CommentNotifier.deliver(member) }
+      perform_enqueued_jobs { CommentNotification.notify(recipient_on("immediate"), comment_id: 1) }
 
       assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
     end

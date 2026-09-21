@@ -12,10 +12,9 @@ module Notey
     end
 
     def notified_member(account_id: 7)
-      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
       member = Member.create!(email: "person@example.com")
       Current.account_id = account_id
-      perform_enqueued_jobs { CommentNotifier.deliver(member) }
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
       member
     end
 

@@ -1,8 +1,8 @@
 ---
 name: notey-develop
-description: Use PROACTIVELY for naming a notifier's notification type, gating a delivery method on what a person wants, addressing a channel at the account, firing a notifier from a domain event, scheduling daily and weekly digest runs, reading a person's inbox, and reading their channels and window — MUST BE USED instead of hand-rolling preference checks, per-account delivery addresses, or a digest loop.
+description: Use PROACTIVELY for defining a notification type, sending one to the recipients your own code resolved, sending one when a domain event fires, addressing a channel at a person, scheduling daily and weekly digest runs, reading a person's inbox, and reading their channels and window — MUST BE USED instead of hand-rolling preference checks, per-person delivery addresses, or a digest loop.
 tools: Read, Write, Edit, Grep
-scope: notifications — a catalog of notification types, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a mapping from domain events to notifiers
+scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel
 ---
 
 This local follows the steps below exactly and invents no others. Where a step
@@ -12,28 +12,31 @@ picking one.
 ## What notey is
 
 notey is the notification layer for a multi-tenant Rails app on top of Noticed.
-It holds which notification types exist, which channels each person wants in
-each account they belong to, and whether they want them as they happen or in a
-daily or weekly digest. Fire this local when a notifier is being written or
-changed, when a domain event should send one, when digests need running, or when
-the host's own code needs to read a person's notifications or their preferences.
+It holds which channels the application can send on, which channels each person
+wants in each account they belong to, and whether they want them as they happen
+or in a daily or weekly digest. Fire this local when a notification type is
+being written or changed, when a domain event should send one, when digests need
+running, or when the host's own code needs to read a person's notifications or
+their preferences.
 
 This local assumes the gem is already hooked into the app; if it is not, that is
 `notey-install`'s work and it comes first.
 
 ## Interface
 
-- `notey_type` — declared inside a notifier class, names which of the catalog's
-  notification types that class delivers.
-- `Notey.wanted(type, on:)` — returns a condition for one delivery method that
-  is true only when the person wants that type on that channel and wants it
-  immediately.
-- `Notey.deliver_on(event_name, notifier)` — maps a domain event to a notifier,
-  so the notifier is delivered whenever that event fires.
-- `Notey.destination_address(channel)` — returns the stored address for the
-  channel on the account the notification belongs to.
-- `Notey.addressed(channel)` — returns a condition that is true only when that
-  account has a stored address for the channel.
+- `Notey::Notification` — the class a notification type inherits, which builds
+  its delivery list from the registered channels and decides each one itself.
+- `notey_type` — declared inside a notification type, names the key a person's
+  stored preferences are held under, so renaming the class keeps them.
+- `required_params` — declared inside a notification type, names the information
+  a caller must pass, and a call that omits any of it is refused.
+- `notify(recipients, **information)` — sends one notification to the recipients
+  the caller resolved, recording one row for each.
+- `Notey.channel(name, delivery_method:, addressed:)` — registers one channel
+  the application can send on, for the whole application.
+- `Notey::Destinations.for(account_id, channel, member:)` — returns the stored
+  destination for that person on that channel, which a delivery method reads to
+  learn where to send.
 - `Notey::DigestRun` — sends one window's digests, with `call` for everyone on
   that window and `deliver_to_member(member, account_id)` for one person in one
   account.
@@ -45,65 +48,76 @@ This local assumes the gem is already hooked into the app; if it is not, that is
   person gets that type on in that account.
 - `digest_window_for(type, account_id:)` — on the recipient model, `immediate`,
   `daily` or `weekly` for that type in that account.
-- `Notey.reset!` — drops the catalog and the event-to-notifier mappings, for
-  tests that declare their own.
+- `Notey.reset!` — drops the registered channels and notification types, for
+  tests that register their own.
 
 ## How to use it
 
-1. Name the type at the top of each notifier class:
+1. Write a notification type that says nothing about channels:
 
    ```ruby
-   class CommentNotifier < Noticed::Event
+   class CommentNotification < Notey::Notification
      notey_type :comment
+
+     required_params :comment_id
+
+     def title
+       "New comment"
+     end
    end
    ```
 
-   The name must be one the catalog declares, or the app raises when it boots
-   with eager loading on. Two notifier classes may name the same type.
+   Ask the developer what information the notification carries and what a person
+   should read on it. Two types may name the same `notey_type`, and renaming the
+   class keeps the preferences people have already stored.
 
-2. Gate every delivery method on what the person wants:
+2. Send it by naming the recipients your own code resolved:
 
    ```ruby
-   deliver_by :email do |config|
-     config.if = Notey.wanted(:comment, on: :email)
+   CommentNotification.notify(recipients, comment_id: comment.id)
+   ```
+
+   Working out who should receive it, and removing duplicates from that list, is
+   the caller's and never notey's. The call is refused before anything is
+   recorded when it omits information the type requires.
+
+3. Write no condition on any channel. notey builds the delivery list from the
+   registered channels and answers three things per recipient per channel before
+   sending: the person wants that channel for that type, their window is
+   immediate, and they have an address if the channel needs one. A type that
+   tries to gate its own channels is doing notey's job twice.
+
+4. For a channel that needs an address, read it inside the delivery method:
+
+   ```ruby
+   class WebhookDeliveryMethod < Noticed::DeliveryMethod
+     def deliver
+       post_to Notey::Destinations.for(event.account_id, :webhook, member: recipient).address
+     end
    end
    ```
 
-   Pass the same type the class names and the channel this delivery method
-   sends on. Without this the delivery runs for everyone regardless of their
-   preferences.
+   notey has already refused the delivery when no address is set, so the lookup
+   never comes back empty here. Ask the developer which channels need an address,
+   since that is named once on the registration and only they know which.
 
-3. Leave the digest to notey. `Notey.wanted` is false when the person's window
-   for that type is daily or weekly, so nothing sends at the time and the
-   notification waits in their inbox for the next run. Never write a second
-   condition for the window.
-
-4. For a channel addressed at the account rather than at the person, read the
-   stored address and skip the delivery when there is none:
+5. Send from a domain event in the host's own subscriber:
 
    ```ruby
-   deliver_by :webhook, class: "WebhookDeliveryMethod" do |config|
-     config.url = Notey.destination_address(:webhook)
-     config.if = Notey.addressed(:webhook)
+   def handle(event)
+     payload = event.payload.to_h.symbolize_keys
+
+     Notey::Current.set(account_id: payload[:account_id]) do
+       CommentNotification.notify(User.where(id: payload[:user_ids]), comment_id: payload[:comment_id])
+     end
    end
    ```
 
-   Ask the developer which channels are addressed at the account, since the two
-   kinds of channel are gated differently and only they know which is which. A
-   channel can carry both conditions, one from step 2 and one from here.
-
-5. Map a domain event to a notifier in an initializer, one line per mapping:
-
-   ```ruby
-   Notey.deliver_on :comment_posted, CommentNotifier
-   ```
-
-   The subscriber sets the account from the event's payload, delivers the
-   notifier with the whole payload as its params, and puts back the account that
-   was set before. An event with no mapping delivers nothing and raises nothing.
-   Ask the developer which events map to which notifiers; nothing in the gem
-   infers it. The payload must carry `account_id`, or the notification is stored
-   against no account and never reaches an inbox.
+   notey holds no mapping from an event to a notification and depends on no event
+   pipeline. The subscriber resolves the recipients and sets the account, because
+   a delivery runs in a job where the current account is gone. Without
+   `account_id` the notification is stored against no account and never reaches
+   an inbox.
 
 6. Schedule the digest windows. notey registers no schedule of its own, so a
    window nobody runs never sends:
@@ -139,27 +153,26 @@ This local assumes the gem is already hooked into the app; if it is not, that is
    ```
 
    All three take the account from the current request when it is left out. All
-   three read a person's stored row for that type, and fall back to the
-   catalog's declared defaults when they have never stored one.
+   three read a person's stored row for that type, and fall back to email and
+   in-app when they have never stored one.
 
-9. In tests that declare their own notification types or event mappings, call
+9. In tests that register their own channels or notification types, call
    `Notey.reset!` in teardown. Both are held for the life of the process, so a
-   test that skips this leaves its types and mappings in place for every test
+   test that skips this leaves its channels and types in place for every test
    after it.
 
 ## Conventions
 
-- **Every notifier names a type.** A notifier without one delivers, but no
-  digest ever includes it, because a digest picks its rows by the type the
-  notifier names.
-- **Every delivery method carries a condition.** An ungated one ignores the
-  person's channels and their window, which is the whole point of the gem.
-- **Every channel the catalog offers is delivered by some notifier.** A channel
-  the catalog offers that no notifier has a delivery method for raises when the
-  app boots with eager loading on.
-- **Only channels the catalog offers for that type may be gated on.** Gating on
-  a channel the type does not offer makes a condition that is always false, and
-  the delivery silently never runs.
+- **Every notification type names a `notey_type`.** Without one no digest ever
+  includes it, because a digest picks its rows by that name.
+- **No notification type names a channel.** Channels are registered once for the
+  whole application, and a type that declares one is describing something it
+  does not decide.
+- **Every registered channel is offered for every type.** A type cannot be kept
+  off a channel, so a channel nobody should get for a given notification is a
+  channel that should not be registered.
+- **Email and in-app exist without being registered.** An application that
+  registers nothing can still send on both.
 - **A digest is mailed to the person's `email`.** A recipient model without one
   raises when its digest is sent, not when the run starts.
 - **A run sends one window once.** Overlapping runs of the same window send one
@@ -170,9 +183,9 @@ This local assumes the gem is already hooked into the app; if it is not, that is
   nothing.
 - **A digest sends nothing when there is nothing to send** — no empty mail, and
   no row saying it went out.
-- **Notifiers, event mappings and digest schedules all belong in the host's
-  code**, never in the gem.
-- **Out of scope.** Declaring the notification types and their channels, making
-  a model a recipient, setting the current person and account, storing an
-  account's addresses, and the pages a person picks their own channels on all
-  belong to `notey-install`.
+- **Notification types, subscribers and digest schedules all belong in the
+  host's code**, never in the gem.
+- **Out of scope.** Registering the channels the application has, making a model
+  a recipient, setting the current person and account, storing an account's
+  addresses, and the pages a person picks their own channels on all belong to
+  `notey-install`.
