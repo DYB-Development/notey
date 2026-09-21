@@ -21,15 +21,15 @@ module Notey
       Notey.reset!
     end
 
-    def failed_attempt
+    def failed_attempt(channels: %w[flaky])
       member = Member.create!(email: "person@example.com")
-      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[flaky])
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: channels)
       begin
         perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
       rescue Minitest::UnexpectedError
         nil
       end
-      Attempt.last
+      Attempt.find_by(channel: "flaky")
     end
 
     test "sends again on the one channel a failed attempt names" do
@@ -67,6 +67,20 @@ module Notey
       error = assert_raises(Notey::UnsendableAttempt) { attempt.send_again }
 
       assert_match(/flaky/, error.message)
+    end
+
+    test "sends no channel that already succeeded for that recipient" do
+      Notey.reset!
+      Notey.register_notifier(CommentNotification)
+      Notey.channel(:webhook, delivery_method: "RecordingDeliveryMethod")
+      Notey.channel(:flaky, delivery_method: "FailingDeliveryMethod")
+      RecordingDeliveryMethod.sent = []
+      attempt = failed_attempt(channels: %w[flaky webhook])
+      FailingDeliveryMethod.failing = false
+
+      perform_enqueued_jobs { attempt.send_again }
+
+      assert_equal 1, RecordingDeliveryMethod.sent.size
     end
   end
 end
