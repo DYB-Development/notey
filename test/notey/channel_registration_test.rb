@@ -4,6 +4,7 @@ require "test_helper"
 
 module Notey
   class ChannelRegistrationTest < ActiveSupport::TestCase
+    setup { Notey.reset! }
     teardown { Notey.reset! }
 
     test "names a channel the application registered" do
@@ -42,6 +43,13 @@ module Notey
       Notey.channel(:sms, delivery_method: "TwilioDeliveryMethod", options: { from: "+15550000" })
 
       assert_equal({ from: "+15550000" }, Notey.registered_channels.first.options)
+    end
+
+    test "lists the channels the application registered without any notification type" do
+      Notey.channel(:email)
+      Notey.channel(:sms)
+
+      assert_equal %w[email sms], Notey.channels.sort
     end
   end
 end

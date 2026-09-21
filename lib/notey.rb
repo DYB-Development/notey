@@ -41,7 +41,7 @@ module Notey
   end
 
   def self.channels
-    notifiers.flat_map { |notifier| notifier.delivery_methods.keys.map(&:to_s) }.uniq
+    registered_channels.map(&:name)
   end
 
   def self.notification_types
