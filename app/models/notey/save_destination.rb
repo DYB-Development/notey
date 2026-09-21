@@ -21,7 +21,7 @@ module Notey
     end
 
     def submitted
-      @values.fetch(:destinations, {}).slice(*Notey.catalog.channels)
+      @values.fetch(:destinations, {}).slice(*Notey.addressed_channels)
     end
 
     def store(channel, attributes)

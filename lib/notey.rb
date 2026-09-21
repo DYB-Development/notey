@@ -64,6 +64,10 @@ module Notey
     always_on_channels + host_channels
   end
 
+  def self.addressed_channels
+    registered_channels.select(&:addressed?).map(&:name)
+  end
+
   def self.always_on_channels
     ALWAYS_ON_DELIVERY.filter_map do |name, delivery_method|
       next if host_channels.any? { |channel| channel.name == name }
