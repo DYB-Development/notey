@@ -13,8 +13,14 @@ module Notey
       return yield if channel.blank?
 
       attempt = Attempt.create!(notification: notification, channel: channel)
-      yield
-      attempt.update!(state: "sent")
+
+      begin
+        yield
+        attempt.update!(state: "sent")
+      rescue StandardError => error
+        attempt.update!(state: "failed", failure: error.message)
+        raise
+      end
     end
   end
 end

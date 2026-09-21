@@ -19,6 +19,12 @@ module Notey
       Notey.reset!
     end
 
+    def deliver_ignoring_failure(&block)
+      perform_enqueued_jobs(&block)
+    rescue Minitest::UnexpectedError
+      nil
+    end
+
     def recipient_wanting(*channels)
       Member.create!(email: "person@example.com").tap do |member|
         Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: channels.map(&:to_s))
@@ -29,6 +35,15 @@ module Notey
       perform_enqueued_jobs { CommentNotification.notify(recipient_wanting(:webhook), comment_id: 1) }
 
       assert_equal [ "webhook", "sent" ], Attempt.last&.then { |a| [ a.channel, a.state ] }
+    end
+
+    test "records a failure and what it said when a send raises" do
+      Notey.channel(:failing, delivery_method: "FailingDeliveryMethod")
+      member = recipient_wanting(:failing)
+
+      deliver_ignoring_failure { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_equal [ "failed", "the provider refused it" ], Attempt.last.then { |a| [ a.state, a.failure ] }
     end
   end
 end
