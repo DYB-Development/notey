@@ -58,5 +58,15 @@ module Notey
 
       assert_empty RecordingDeliveryMethod.sent
     end
+
+    test "sends on a channel that needs no address without any destination" do
+      Notey.channel(:plain, delivery_method: "RecordingDeliveryMethod")
+      member = Member.create!(email: "person@example.com")
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[plain])
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_equal 1, RecordingDeliveryMethod.sent.size
+    end
   end
 end
