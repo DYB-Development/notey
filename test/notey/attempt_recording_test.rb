@@ -45,5 +45,11 @@ module Notey
 
       assert_equal [ "failed", "the provider refused it" ], Attempt.last.then { |a| [ a.state, a.failure ] }
     end
+
+    test "records nothing for a channel the send decision refused" do
+      perform_enqueued_jobs { CommentNotification.notify(recipient_wanting(:webhook), comment_id: 1) }
+
+      assert_equal %w[webhook], Attempt.pluck(:channel)
+    end
   end
 end
