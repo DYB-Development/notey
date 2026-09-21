@@ -17,14 +17,13 @@ module Notey
     end
 
     def notify(member, account_id: 7)
-      Notey.catalog { notification :comment, channels: %w[test], default: %w[test] }
       Current.account_id = account_id
-      perform_enqueued_jobs { CommentNotifier.deliver(member) }
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
       Current.reset
     end
 
     test "does not query more as the list grows" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       3.times { notify(member) }
       get "/notey/notifications", headers: headers_for(member)
       baseline = count_queries { get "/notey/notifications", headers: headers_for(member) }
@@ -44,7 +43,7 @@ module Notey
     end
 
     test "refuses to mark read a notification held in another account" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member, account_id: 8)
 
       patch "/notey/notifications/#{Noticed::Notification.last.id}",
@@ -54,7 +53,7 @@ module Notey
     end
 
     test "lists at most one page of notifications" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       (Notey::NotificationsController::PER_PAGE + 1).times { notify(member) }
 
       get "/notey/notifications", headers: headers_for(member)
@@ -63,7 +62,7 @@ module Notey
     end
 
     test "leaves a notification past the first page unseen" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       (Notey::NotificationsController::PER_PAGE + 1).times { notify(member) }
 
       get "/notey/notifications", headers: headers_for(member)
@@ -72,7 +71,7 @@ module Notey
     end
 
     test "lists the notifications addressed to a person in the account they are in" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
 
       get "/notey/notifications", headers: headers_for(member)
@@ -81,7 +80,7 @@ module Notey
     end
 
     test "leaves out a notification belonging to another of that person's accounts" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member, account_id: 8)
 
       get "/notey/notifications", headers: headers_for(member, account_id: 7)
@@ -90,7 +89,7 @@ module Notey
     end
 
     test "marks the listed notifications as seen" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
 
       get "/notey/notifications", headers: headers_for(member)
@@ -99,7 +98,7 @@ module Notey
     end
 
     test "shows a notification as read after a person marks it" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
 
       patch "/notey/notifications/#{Noticed::Notification.last.id}", headers: headers_for(member)
@@ -108,7 +107,7 @@ module Notey
     end
 
     test "shows how many notifications are unread in the current account" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
       notify(member)
 
@@ -118,7 +117,7 @@ module Notey
     end
 
     test "lists what the one relation holds and nothing else" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
 
       Inbox.stub(:for, ->(*) { Noticed::Notification.none }) do
@@ -129,7 +128,7 @@ module Notey
     end
 
     test "counts unread from the one relation and nothing else" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
 
       Inbox.stub(:for, ->(*) { Noticed::Notification.none }) do
@@ -140,7 +139,7 @@ module Notey
     end
 
     test "counts no unread when no account is set" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
       Noticed::Notification.last.update_column(:account_id, nil)
 
@@ -150,7 +149,7 @@ module Notey
     end
 
     test "lists nothing when no account is set" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       notify(member)
       Noticed::Notification.last.update_column(:account_id, nil)
 
