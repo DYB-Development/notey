@@ -4,6 +4,24 @@
 
 - Nothing yet.
 
+## 0.3.0
+
+### Added
+
+- `Notey.attempt_retention`, which says how long notey keeps the record of what
+  it sent on each channel.
+- `Notey::DeleteOldAttempts`, which deletes every record older than that period
+  and refuses to run when no period is set. Nothing is deleted until the host
+  runs it, and a host schedules it the way it schedules the digest windows.
+
+### Fixed
+
+- A person whose record holds no email address is skipped on email rather than
+  sent to. Before this the send failed at the mail server, a failed delivery
+  attempt was recorded against that person, and the job backend retried a send
+  that could never succeed. One unreachable person also stopped the notification
+  reaching everyone else on that channel.
+
 ## 0.2.0
 
 An application now says once which channels it can send on, and a notification
