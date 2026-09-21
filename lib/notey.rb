@@ -6,6 +6,7 @@ require "notey/destinations"
 require "notey/event_delivery"
 require "notey/inbox"
 require "notey/digest_run"
+require "notey/records_attempt"
 
 module Notey
   ALWAYS_ON_DELIVERY = { "email" => "Notey::Email", "in_app" => "Notey::InApp" }.freeze

@@ -10,11 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_010001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
   create_table "members", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "notey_attempts", force: :cascade do |t|
+    t.string "channel", null: false
+    t.datetime "created_at", null: false
+    t.text "failure"
+    t.integer "notification_id", null: false
+    t.string "state", default: "claimed", null: false
+    t.datetime "updated_at", null: false
+    t.index ["notification_id", "channel"], name: "index_notey_attempts_unique", unique: true
+    t.index ["notification_id"], name: "index_notey_attempts_on_notification_id"
   end
 
   create_table "notey_destinations", force: :cascade do |t|
@@ -83,4 +94,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_010001) do
     t.index ["event_id"], name: "index_noticed_notifications_on_event_id"
     t.index ["recipient_type", "recipient_id"], name: "index_noticed_notifications_on_recipient"
   end
+
+  add_foreign_key "notey_attempts", "noticed_notifications", column: "notification_id", on_delete: :cascade
 end
