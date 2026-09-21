@@ -10,7 +10,7 @@ module Notey
       stored = stored_for(member, notification_type, account_id)
 
       Decision.new(
-        channels: stored ? Array(stored.channels).map(&:to_s) : Notey.default_channels,
+        channels: channels_of(stored, notification_type) & Notey.channels,
         window: stored&.digest_window || "immediate"
       )
     end
