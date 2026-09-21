@@ -45,5 +45,17 @@ module Notey
 
       assert_select "label", text: /Sms/
     end
+
+    test "does not offer a channel the application no longer has" do
+      member = Member.create!
+      preference = Notey::Preference.new(member: member, account_id: 7,
+        notification_type: "comment", channels: %w[carrier_pigeon])
+      preference.save(validate: false)
+
+      render partial: "notey/preferences",
+        locals: { person: member, account: 7, selection: {}, submit_url: "/settings" }
+
+      assert_select "input[value=carrier_pigeon]", false
+    end
   end
 end
