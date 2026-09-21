@@ -35,5 +35,13 @@ module Notey
 
       assert_equal 3, Noticed::Notification.where(recipient: members).count
     end
+
+    test "records nothing when a call omits information the type requires" do
+      member = Member.create!
+
+      assert_raises(Noticed::ValidationError) { CommentNotification.notify(member) }
+
+      assert_equal 0, Noticed::Notification.where(recipient: member).count
+    end
   end
 end

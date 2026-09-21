@@ -14,7 +14,7 @@ module Notey
     end
 
     def self.notify(recipients, **information)
-      with(**information).deliver(recipients)
+      with(information).deliver(recipients)
     end
 
     def self.delivery_methods
