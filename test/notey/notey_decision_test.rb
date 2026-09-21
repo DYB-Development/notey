@@ -55,5 +55,14 @@ module Notey
 
       assert_empty Noticed::DeliveryMethods::Test.delivered
     end
+
+    test "records a notification in the inbox whatever the decision says" do
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: [])
+
+      perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
+
+      assert_equal 1, Noticed::Notification.where(recipient: member).count
+    end
   end
 end
