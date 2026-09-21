@@ -10,7 +10,11 @@ require "notey/digest_run"
 module Notey
   ALWAYS_ON = %w[email in_app].freeze
 
-  RegisteredChannel = Struct.new(:name, :delivery_method, keyword_init: true)
+  RegisteredChannel = Struct.new(:name, :delivery_method, keyword_init: true) do
+    def addressed?
+      false
+    end
+  end
 
   class UndeclaredType < StandardError; end
   class UndeliverableChannel < StandardError; end

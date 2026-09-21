@@ -25,5 +25,11 @@ module Notey
 
       assert_equal "TwilioDeliveryMethod", Notey.registered_channels.first.delivery_method
     end
+
+    test "needs no address unless the registration says so" do
+      Notey.channel(:in_app)
+
+      refute_predicate Notey.registered_channels.first, :addressed?
+    end
   end
 end
