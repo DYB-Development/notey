@@ -18,6 +18,10 @@ module Notey
       notey_notification_type.humanize
     end
 
+    def body
+      nil
+    end
+
     def self.delivery_config(channel)
       config = ActiveSupport::OrderedOptions.new
       config[:class] = channel.delivery_method if channel.delivery_method

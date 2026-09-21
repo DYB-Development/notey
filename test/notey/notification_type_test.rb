@@ -47,5 +47,11 @@ module Notey
 
       assert_equal "Comment", type.new(params: {}).title
     end
+
+    test "presents no body unless it presents one of its own" do
+      type = Class.new(Notey::Notification) { notey_type :comment }
+
+      assert_nil type.new(params: {}).body
+    end
   end
 end
