@@ -2,7 +2,7 @@
 name: notey-info
 description: Use to learn what notey offers — notification types and the channels they allow, per-person per-account delivery preferences, digest windows, an in-app inbox, and per-account destinations.
 tools: Read
-scope: notifications — a catalog of notification types, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a mapping from domain events to notifiers
+scope: notifications — application-wide channel registrations, notification types that name no channel, per-person per-account channel preferences, digest windows, an in-app inbox, per-account destinations, and a record of what was sent on each channel
 ---
 
 This local explains what notey is and which of its other two locals you need. It
@@ -52,15 +52,12 @@ has already been sent, you are building, and `notey-develop` owns it.
 ## Conventions
 
 - **Notification type** — the name of one kind of notification, as a string. It
-  is the unit everything else is keyed by: a person's preference, a notifier's
-  declaration, and the channels on offer.
-- **Catalog** — the one declaration of which notification types exist, which
-  channels each offers, and which of those channels apply when a person has
-  stored nothing. A type that is not in it is unknown to notey, and a channel a
-  type does not offer cannot be stored against it.
-- **Channel** — a named way of delivering, such as email or a chat webhook. The
-  catalog offers them per notification type; a notifier is what actually
-  delivers on one.
+  is the unit everything else is keyed by: a person's preference and the name a
+  notification type declares.
+- **Channel** — a named way of delivering, such as email or a chat webhook,
+  registered once for the whole application. Email and in-app exist without
+  being registered; anything else exists only if the application registered it.
+  Every registered channel is offered for every notification type.
 - **Member** — the person a preference belongs to. It is polymorphic, so a host
   app names whichever model of its own receives notifications.
 - **Account** — the tenant. Preferences, notifications, digests and destinations
@@ -72,9 +69,15 @@ has already been sent, you are building, and `notey-develop` owns it.
   notification happens; the other two hold it for a grouped email covering the
   current day or week.
 - **Destination** — one address per account per channel, with an optional stored
-  credential, for channels addressed at the account rather than at a person.
+  credential, optionally owned by one person. A notification for a person uses
+  the address that person set, never the account's.
 - **Inbox** — the notifications a member has received within one account, which
   is what the in-app list reads and what a digest gathers from.
-- **Notifier** — the Noticed class that delivers one notification type. Every
-  notifier names a type the catalog holds, and every channel the catalog offers
-  is delivered on by some notifier.
+- **Notification type** — the class describing what one notification carries and
+  what a person reads on it. It names no channel, because notey builds the
+  delivery list from the registered channels and decides each one against the
+  recipient's stored preference.
+- **Attempt** — one row per notification per outbound channel, claimed before the
+  send and marked after, holding whether it was sent and what a failure said. It
+  is what answers why one person was not reached, and it is what stops the same
+  channel sending twice for the same notification.
