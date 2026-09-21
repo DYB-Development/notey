@@ -95,6 +95,12 @@ module Notey
       "the channel #{channel.name} needs the option #{required.first}, which notey does not supply"
   end
 
+  def self.known_delivery_method(channel)
+    delivery_method_for(channel)
+  rescue UnsendableChannel
+    nil
+  end
+
   def self.delivery_method_for(channel)
     name = channel.delivery_method || "Noticed::DeliveryMethods::#{channel.name.camelize}"
     name.to_s.constantize
@@ -108,11 +114,12 @@ module Notey
     raise MissingSender, "notey sends digests by email and no mailer_sender is set"
   end
 
-  def self.sends(notification_type, on:, addressed: false)
+  def self.sends(notification_type, on:, addressed: false, via: nil)
     lambda do
       decision = Channels.decision_for(recipient, notification_type, account_id: event.account_id)
 
       next false unless decision.window == "immediate" && decision.channels.include?(on.to_s)
+      next false if via.respond_to?(:reachable?) && !via.reachable?(recipient)
       next true unless addressed
 
       Destinations.for(event.account_id, on, member: recipient).present?

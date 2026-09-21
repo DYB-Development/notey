@@ -27,7 +27,8 @@ module Notey
       config = ActiveSupport::OrderedOptions.new
       config[:class] = channel.delivery_method if channel.delivery_method
       config[:notey_channel] = channel.name
-      config[:if] = Notey.sends(notey_notification_type, on: channel.name, addressed: channel.addressed?)
+      config[:if] = Notey.sends(notey_notification_type, on: channel.name, addressed: channel.addressed?,
+        via: Notey.known_delivery_method(channel))
       config
     end
     private_class_method :delivery_config
