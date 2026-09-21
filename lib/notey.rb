@@ -17,6 +17,7 @@ module Notey
   end
 
   class MissingSender < StandardError; end
+  class UnsendableChannel < StandardError; end
 
   class << self
     attr_writer :notification_url, :mailer_sender
@@ -81,7 +82,19 @@ module Notey
   end
 
   def self.check!
+    registered_channels.each { |channel| check_channel!(channel) }
     check_sender!
+  end
+
+  def self.check_channel!(channel)
+    delivery_method_for(channel)
+  end
+
+  def self.delivery_method_for(channel)
+    name = channel.delivery_method || "Noticed::DeliveryMethods::#{channel.name.camelize}"
+    name.to_s.constantize
+  rescue NameError
+    raise UnsendableChannel, "the channel #{channel.name} names the delivery method #{name}, which does not exist"
   end
 
   def self.check_sender!
