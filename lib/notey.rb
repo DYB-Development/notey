@@ -10,6 +10,8 @@ require "notey/digest_run"
 module Notey
   ALWAYS_ON = %w[email in_app].freeze
 
+  RegisteredChannel = Struct.new(:name, keyword_init: true)
+
   class UndeclaredType < StandardError; end
   class UndeliverableChannel < StandardError; end
   class MissingSender < StandardError; end
@@ -44,6 +46,14 @@ module Notey
 
   def self.default_channels
     channels & ALWAYS_ON
+  end
+
+  def self.channel(name)
+    registered_channels << RegisteredChannel.new(name: name.to_s)
+  end
+
+  def self.registered_channels
+    @registered_channels ||= []
   end
 
   def self.forget_notifiers
