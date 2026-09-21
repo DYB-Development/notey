@@ -49,5 +49,14 @@ module Notey
 
       assert_empty RecordingDeliveryMethod.sent
     end
+
+    test "sends nothing to an address the account set rather than the person" do
+      member = recipient_wanting_recording
+      Destination.create!(account_id: 7, channel: "recording", address: "https://account.example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_empty RecordingDeliveryMethod.sent
+    end
   end
 end
