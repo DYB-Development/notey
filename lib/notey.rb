@@ -10,6 +10,12 @@ require "notey/digest_run"
 module Notey
   ALWAYS_ON = %w[email in_app].freeze
 
+  RegisteredChannel = Struct.new(:name, :delivery_method, :addressed, keyword_init: true) do
+    def addressed?
+      addressed == true
+    end
+  end
+
   class UndeclaredType < StandardError; end
   class UndeliverableChannel < StandardError; end
   class MissingSender < StandardError; end
@@ -35,7 +41,7 @@ module Notey
   end
 
   def self.channels
-    notifiers.flat_map { |notifier| notifier.delivery_methods.keys.map(&:to_s) }.uniq
+    registered_channels.map(&:name)
   end
 
   def self.notification_types
@@ -44,6 +50,16 @@ module Notey
 
   def self.default_channels
     channels & ALWAYS_ON
+  end
+
+  def self.channel(name, delivery_method: nil, addressed: false)
+    registered_channels << RegisteredChannel.new(
+      name: name.to_s, delivery_method: delivery_method, addressed: addressed
+    )
+  end
+
+  def self.registered_channels
+    @registered_channels ||= []
   end
 
   def self.forget_notifiers
@@ -119,6 +135,7 @@ module Notey
   def self.reset!
     @catalog = nil
     @event_notifiers = nil
+    @registered_channels = nil
     forget_notifiers
   end
 end
