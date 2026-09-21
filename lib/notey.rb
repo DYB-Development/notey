@@ -18,6 +18,7 @@ module Notey
 
   class MissingSender < StandardError; end
   class UnsendableChannel < StandardError; end
+  class UnsendableAttempt < StandardError; end
 
   class << self
     attr_writer :notification_url, :mailer_sender
