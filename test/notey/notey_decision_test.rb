@@ -36,5 +36,14 @@ module Notey
 
       assert_equal 1, Noticed::DeliveryMethods::Test.delivered.size
     end
+
+    test "delivers on the channels that are on before anyone chooses" do
+      Notey.channel(:in_app, delivery_method: "RecordingDeliveryMethod")
+      RecordingDeliveryMethod.sent = []
+
+      perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(Member.create!) }
+
+      assert_equal 1, RecordingDeliveryMethod.sent.size
+    end
   end
 end
