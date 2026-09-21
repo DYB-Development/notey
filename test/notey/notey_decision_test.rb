@@ -1,0 +1,30 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module Notey
+  class NoteyDecisionTest < ActiveSupport::TestCase
+    include ActiveJob::TestHelper
+
+    setup do
+      Notey.reset!
+      Notey.channel(:test, delivery_method: "Noticed::DeliveryMethods::Test")
+      Noticed::DeliveryMethods::Test.delivered = []
+      Current.account_id = 7
+    end
+
+    teardown do
+      Current.reset
+      Notey.reset!
+    end
+
+    test "sends nothing on a channel the recipient's stored preference leaves out" do
+      member = Member.create!
+      Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: [])
+
+      perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
+
+      assert_empty Noticed::DeliveryMethods::Test.delivered
+    end
+  end
+end
