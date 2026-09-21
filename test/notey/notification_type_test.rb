@@ -14,11 +14,10 @@ module Notey
     end
 
     test "is delivered on every channel the application registered" do
-      Notey.channel(:email)
       Notey.channel(:sms)
       type = Class.new(Notey::Notification) { notey_type :comment }
 
-      assert_equal %i[email sms], type.delivery_methods.keys.sort
+      assert_equal %i[email in_app sms], type.delivery_methods.keys.sort
     end
 
     test "is delivered on a channel registered after it was defined" do
@@ -26,7 +25,7 @@ module Notey
 
       Notey.channel(:sms)
 
-      assert_equal %i[sms], type.delivery_methods.keys
+      assert_includes type.delivery_methods.keys, :sms
     end
 
     test "sends a channel with the delivery method its registration named" do

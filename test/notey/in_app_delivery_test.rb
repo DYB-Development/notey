@@ -19,7 +19,7 @@ module Notey
     end
 
     test "leaves the inbox record noticed already wrote and sends nothing further" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
 
       perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
 

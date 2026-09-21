@@ -20,7 +20,7 @@ module Notey
     end
 
     test "sends nothing on a channel the recipient's stored preference leaves out" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: [])
 
       perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
@@ -29,7 +29,7 @@ module Notey
     end
 
     test "delivers on a channel the recipient's stored preference names" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: %w[test])
 
       perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
@@ -41,13 +41,13 @@ module Notey
       Notey.channel(:in_app, delivery_method: "RecordingDeliveryMethod")
       RecordingDeliveryMethod.sent = []
 
-      perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(Member.create!) }
+      perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(Member.create!(email: "person@example.com")) }
 
       assert_equal 1, RecordingDeliveryMethod.sent.size
     end
 
     test "sends nothing at the moment it happens when the recipient's window is daily" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       Preference.create!(member: member, account_id: 7, notification_type: "comment",
         channels: %w[test], digest_window: "daily")
 
@@ -57,7 +57,7 @@ module Notey
     end
 
     test "records a notification in the inbox whatever the decision says" do
-      member = Member.create!
+      member = Member.create!(email: "person@example.com")
       Preference.create!(member: member, account_id: 7, notification_type: "comment", channels: [])
 
       perform_enqueued_jobs { CommentNotification.with(comment_id: 1).deliver(member) }
