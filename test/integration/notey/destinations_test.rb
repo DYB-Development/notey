@@ -14,7 +14,7 @@ module Notey
     end
 
     test "keeps an address an administrator set for a channel" do
-      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+      Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
 
       patch "/notey/destinations",
         params: { destinations: { recording: { address: "https://x.example.com", credential: "sekrit" } } },
@@ -24,7 +24,7 @@ module Notey
     end
 
     test "keeps a stored credential when the box is left empty" do
-      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+      Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
       Destination.create!(account_id: 7, channel: "recording",
         address: "https://x.example.com", credential: "sekrit")
 
@@ -36,7 +36,7 @@ module Notey
     end
 
     test "ignores a channel the catalog does not offer" do
-      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+      Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
 
       patch "/notey/destinations",
         params: { destinations: { carrier_pigeon: { address: "https://x.example.com" } } },
@@ -46,7 +46,7 @@ module Notey
     end
 
     test "shows the page again when a destination does not save" do
-      Notey.catalog { notification :comment, channels: %w[recording], default: [] }
+      Notey.channel(:recording, delivery_method: "RecordingDeliveryMethod", addressed: true)
 
       patch "/notey/destinations",
         params: { destinations: { recording: { address: "" } } },
