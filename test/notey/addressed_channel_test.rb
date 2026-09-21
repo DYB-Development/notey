@@ -30,5 +30,14 @@ module Notey
 
       assert_empty RecordingDeliveryMethod.sent
     end
+
+    test "sends on an addressed channel the recipient set an address for" do
+      member = recipient_wanting_recording
+      Destination.create!(account_id: 7, channel: "recording", member: member, address: "https://mine.example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_equal 1, RecordingDeliveryMethod.sent.size
+    end
   end
 end
