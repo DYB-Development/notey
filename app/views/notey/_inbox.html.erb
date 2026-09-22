@@ -1,0 +1,9 @@
+<% notifications = Notey::Inbox.for(person, account_id: account).includes(:event).order(created_at: :desc) %>
+
+<% notifications.each do |notification| %>
+  <%= ui_panel do %>
+    <div data-notification-id="<%= notification.id %>">
+      <%= notification.event.title %>
+    </div>
+  <% end %>
+<% end %>
