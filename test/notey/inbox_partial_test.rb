@@ -34,5 +34,14 @@ module Notey
 
       assert_select "[data-notification-id]", 0
     end
+
+    test "marks a notification the person has not read as unread" do
+      member = Member.create!(email: "person@example.com")
+      notification_for(member)
+
+      draw(person: member)
+
+      assert_select "[data-notification-id]", text: /Unread/
+    end
   end
 end

@@ -4,6 +4,7 @@
   <%= ui_panel do %>
     <div data-notification-id="<%= notification.id %>">
       <%= notification.event.title %>
+      <%= ui_badge(label: notification.read? ? "Read" : "Unread") %>
     </div>
   <% end %>
 <% end %>
