@@ -52,5 +52,14 @@ module Notey
 
       assert_select "form[action='/notifications']"
     end
+
+    test "stops showing a notification as unread once it is read" do
+      member = Member.create!(email: "person@example.com")
+      notification_for(member).mark_as_read!
+
+      draw(person: member)
+
+      assert_select "[data-notification-id]", text: /Read/
+    end
   end
 end
