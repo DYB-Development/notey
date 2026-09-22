@@ -43,5 +43,14 @@ module Notey
 
       assert_select "[data-notification-id]", text: /Unread/
     end
+
+    test "offers to mark an unread notification read on the page the host names" do
+      member = Member.create!(email: "person@example.com")
+      notification_for(member)
+
+      draw(person: member)
+
+      assert_select "form[action='/notifications']"
+    end
   end
 end
