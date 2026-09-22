@@ -22,6 +22,8 @@ develop:
   - Notey::DigestRun
   - Notey::DeleteOldAttempts
   - Notey::Inbox.for
+  - notey/inbox
+  - Notey::MarkRead
   - wants?
   - channels_for
   - digest_window_for
@@ -43,6 +45,8 @@ sources:
   - app/models/notey/digest.rb
   - app/models/notey/attempt.rb
   - app/models/notey/delete_old_attempts.rb
+  - app/models/notey/mark_read.rb
+  - app/views/notey/_inbox.html.erb
   - app/delivery_methods/notey/email.rb
   - app/delivery_methods/notey/in_app.rb
   - app/jobs/notey/digest_job.rb
