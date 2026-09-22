@@ -45,6 +45,11 @@ This local assumes the gem is already hooked into the app; if it is not, that is
   set.
 - `Notey::Inbox.for(member, account_id:)` — returns that person's notifications
   for that account, as a relation.
+- `notey/inbox` — the partial a host renders inside a page of its own to show a
+  person their notifications, taking `person`, `account` and the `submit_url`
+  that marking one read posts to.
+- `Notey::MarkRead` — marks the notification a person picked as read, and marks
+  nothing when the id belongs to another person or another account.
 - `wants?(type, on:, account_id:)` — on the recipient model, true when that
   person wants that type on that channel in that account.
 - `channels_for(type, account_id:)` — on the recipient model, the channels that

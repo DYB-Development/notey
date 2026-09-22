@@ -21,7 +21,9 @@ module Notey
 
     def preference_queries(&block)
       count = 0
-      counter = ->(*, payload) { count += 1 if payload[:sql].to_s.include?("notey_preferences") }
+      counter = lambda do |*, payload|
+        count += 1 if payload[:name] == "Notey::Preference Load" && payload[:sql].to_s.include?("notey_preferences")
+      end
       ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
       count
     end

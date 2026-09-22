@@ -163,8 +163,8 @@ end
 
 ## Settings sections
 
-Notey ships its two pages as partials and their saving as action objects, so a
-settings shell renders them inside its own chrome rather than linking away.
+Notey ships its screens as partials and their saving as action objects, so a
+settings shell renders them inside its own page frame rather than linking away.
 With [`bureau`](https://github.com/DYB-Development/bureau):
 
 ```ruby
@@ -179,6 +179,29 @@ Bureau.section :notification_destinations, area: :account, title: "Notification 
 A section registered this way is served by the settings shell, so the shell's
 own capability check guards it. A section that only links to a mounted path is
 not guarded, because the shell never renders it.
+
+## The inbox
+
+The inbox is the same shape and is not a setting, so render it wherever a
+person's notifications belong in your own pages:
+
+```erb
+<%= render "notey/inbox",
+      person: current_user,
+      account: current_account.id,
+      submit_url: notifications_path %>
+```
+
+It lists the notifications that person received in that account, newest first,
+marking the unread ones. Marking one read posts to the url you named, so the
+person stays on your page, and the action behind it runs:
+
+```ruby
+Notey::MarkRead.new(person: current_user, account: current_account.id, values: params).call
+```
+
+It marks only a notification that person received in that account, so an id
+from anywhere else does nothing.
 
 `Notey::SavePreferences` and `Notey::SaveDestination` take `person:`, `account:`
 and `values:`, and answer with an object responding to `ok?` and `message`. The

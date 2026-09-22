@@ -1,0 +1,16 @@
+<% notifications = Notey::Inbox.for(person, account_id: account).includes(:event).order(created_at: :desc) %>
+
+<% notifications.each do |notification| %>
+  <%= ui_panel do %>
+    <div data-notification-id="<%= notification.id %>">
+      <%= notification.event.title %>
+      <%= ui_badge(label: notification.read? ? "Read" : "Unread") %>
+      <% unless notification.read? %>
+        <%= ui_form(action: submit_url, method: :patch) do %>
+          <%= hidden_field_tag "read", notification.id, id: nil %>
+          <%= ui_button(label: "Mark read") %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
