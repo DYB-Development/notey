@@ -25,5 +25,14 @@ module Notey
 
       assert_select "[data-notification-id]", 1
     end
+
+    test "leaves out the notifications a person received in another account" do
+      member = Member.create!(email: "person@example.com")
+      notification_for(member, account_id: 8)
+
+      draw(person: member)
+
+      assert_select "[data-notification-id]", 0
+    end
   end
 end
