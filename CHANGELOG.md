@@ -4,6 +4,23 @@
 
 - Nothing yet.
 
+## 0.4.0
+
+### Added
+
+- An inbox a host renders inside a page of its own, listing the notifications a
+  person received in the account they are in, newest first, with the unread ones
+  marked.
+- `Notey::MarkRead`, which marks the notification a person picked as read. It
+  reaches only a notification that person received in that account, so an id
+  from anywhere else does nothing.
+
+### Fixed
+
+- Two query counters in the test suite counted column introspection as a
+  preference read, so the suite failed on some random seeds and passed on
+  others.
+
 ## 0.3.0
 
 ### Added
