@@ -90,5 +90,13 @@ module Notey
 
       assert_select "turbo-cable-stream-source", 0
     end
+
+    test "subscribes the page to nothing while live updates are left off" do
+      member = Member.create!(email: "person@example.com")
+
+      draw(person: member)
+
+      assert_select "turbo-cable-stream-source", 0
+    end
   end
 end
