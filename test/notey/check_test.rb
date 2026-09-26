@@ -52,5 +52,16 @@ module Notey
 
       assert_match(/mark_read_url/, error.message)
     end
+
+    test "refuses to run live updates without Turbo loaded" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+
+      error = Notey.stub(:turbo_loaded?, false) do
+        assert_raises(Notey::MissingTurbo) { Notey.check! }
+      end
+
+      assert_match(/turbo-rails/, error.message)
+    end
   end
 end

@@ -22,6 +22,7 @@ module Notey
   class UnsendableAttempt < StandardError; end
   class MissingRetention < StandardError; end
   class MissingMarkReadUrl < StandardError; end
+  class MissingTurbo < StandardError; end
 
   class << self
     attr_writer :notification_url, :mailer_sender
@@ -120,9 +121,14 @@ module Notey
   end
 
   def self.check_live_updates!
+    raise MissingTurbo, "notey pushes live updates with turbo-rails, which is not loaded" unless turbo_loaded?
     return if mark_read_url
 
     raise MissingMarkReadUrl, "notey pushes rows with a Mark read button and no mark_read_url is set"
+  end
+
+  def self.turbo_loaded?
+    defined?(::Turbo::StreamsChannel).present?
   end
 
   def self.sends(notification_type, on:, addressed: false, via: nil)
