@@ -2,7 +2,24 @@
 
 ## Unreleased
 
-- Nothing yet.
+### Added
+
+- Live updates, off until `Notey.live_updates` is set. A notification delivered
+  in-app appears in the person's open inbox without a reload, and marking one
+  read updates their other open tabs.
+- `Notey.mark_read_url`, the url a pushed row's Mark read button posts to.
+- An unread count partial a host places anywhere on its page, which a live
+  update keeps current.
+- A boot check that refuses live updates without Turbo loaded or without a
+  `mark_read_url`.
+
+### Changed
+
+- The engine's notifications page shows each notification's title rather than
+  its class name, using the same row as the host inbox.
+- Marking read from the engine's notifications page goes through
+  `Notey::MarkRead`, so a notification from another account now redirects back
+  with nothing marked rather than answering not found.
 
 ## 0.4.0
 
