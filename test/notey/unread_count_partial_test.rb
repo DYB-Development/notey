@@ -28,5 +28,14 @@ module Notey
 
       assert_select "#notey_unread_count", text: "0"
     end
+
+    test "leaves out what the person has already read" do
+      member = Member.create!(email: "person@example.com")
+      notification_for(member).mark_as_read!
+
+      render partial: "notey/unread_count", locals: { person: member, account: 7 }
+
+      assert_select "#notey_unread_count", text: "0"
+    end
   end
 end
