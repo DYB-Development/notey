@@ -12,7 +12,7 @@ module Notey
     end
 
     def update
-      inbox.find(params[:id]).mark_as_read!
+      MarkRead.new(person: Current.member, account: Current.account_id, values: { read: params[:id] }).call
 
       redirect_to notifications_path
     end

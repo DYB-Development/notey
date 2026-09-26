@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "turbo/broadcastable/test_helper"
 
 module Notey
   class NotificationsTest < ActionDispatch::IntegrationTest
     include ActiveJob::TestHelper
     include ActiveRecord::Assertions::QueryAssertions
+    include Turbo::Broadcastable::TestHelper
 
     teardown do
       Current.reset
@@ -156,6 +158,20 @@ module Notey
       get "/notey/notifications", headers: { "X-Member-Id" => member.id.to_s }
 
       assert_select "[data-notification-id]", 0
+    end
+
+    test "replaces a row read on this page in the person's other open pages" do
+      member = Member.create!(email: "person@example.com")
+      notify(member)
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      notification = Noticed::Notification.last
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        patch "/notey/notifications/#{notification.id}", headers: headers_for(member)
+      end
+
+      assert pushed.any? { |stream| stream["target"] == "notey_notification_#{notification.id}" }
     end
   end
 end
