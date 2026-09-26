@@ -207,6 +207,42 @@ from anywhere else does nothing.
 and `values:`, and answer with an object responding to `ok?` and `message`. The
 engine's own pages call the same two actions.
 
+## Live updates
+
+An open inbox can show a new notification the moment it is delivered, without a
+reload. It is off until you turn it on, because it needs Turbo and a running
+Action Cable server in production.
+
+```ruby
+# config/initializers/notey.rb
+Notey.live_updates = true
+Notey.mark_read_url = ->(notification) { Rails.application.routes.url_helpers.notifications_path }
+```
+
+`mark_read_url` is the url a pushed row's Mark read button posts to. A push is
+rendered in a background job, which has no request to read that url from, so
+you name it here. It is usually the same url you pass the inbox as `submit_url`.
+
+With it on, the inbox and the engine's notifications page subscribe to one
+stream per person per account, and:
+
+- a notification delivered in-app appears at the top of that person's open
+  inbox in that account,
+- marking one read shows it as read in the person's other open tabs,
+- the unread count changes in every open tab of that person in that account.
+
+Show the unread count anywhere on your page, and a push keeps it current:
+
+```erb
+<%= render "notey/unread_count", person: current_user, account: current_account.id %>
+```
+
+Notey does not install Turbo for you. Add `turbo-rails` to your Gemfile and load
+its JavaScript. With live updates on and Turbo or `mark_read_url` missing, the
+app refuses to boot and names what is missing. A push that fails, such as when
+the cable server is down, is logged, and the read or delivery it came from still
+goes through.
+
 ## Sending digests
 
 A type set to daily or weekly sends nothing when it happens. Run the window on a

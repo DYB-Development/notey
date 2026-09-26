@@ -3,6 +3,7 @@ require "notey/engine"
 require "notey/channels"
 require "notey/destinations"
 require "notey/inbox"
+require "notey/live_inbox"
 require "notey/digest_run"
 require "notey/records_attempt"
 
@@ -20,10 +21,12 @@ module Notey
   class UnsendableChannel < StandardError; end
   class UnsendableAttempt < StandardError; end
   class MissingRetention < StandardError; end
+  class MissingMarkReadUrl < StandardError; end
+  class MissingTurbo < StandardError; end
 
   class << self
     attr_writer :notification_url, :mailer_sender
-    attr_accessor :attempt_retention
+    attr_accessor :attempt_retention, :live_updates, :mark_read_url
   end
 
   def self.mailer_sender
@@ -87,6 +90,7 @@ module Notey
   def self.check!
     registered_channels.each { |channel| check_channel!(channel) }
     check_sender!
+    check_live_updates! if live_updates
   end
 
   def self.check_channel!(channel)
@@ -116,6 +120,17 @@ module Notey
     raise MissingSender, "notey sends digests by email and no mailer_sender is set"
   end
 
+  def self.check_live_updates!
+    raise MissingTurbo, "notey pushes live updates with turbo-rails, which is not loaded" unless turbo_loaded?
+    return if mark_read_url
+
+    raise MissingMarkReadUrl, "notey pushes rows with a Mark read button and no mark_read_url is set"
+  end
+
+  def self.turbo_loaded?
+    defined?(::Turbo::StreamsChannel).present?
+  end
+
   def self.sends(notification_type, on:, addressed: false, via: nil)
     lambda do
       decision = Channels.decision_for(recipient, notification_type, account_id: event.account_id)
@@ -130,6 +145,8 @@ module Notey
 
   def self.reset!
     @host_channels = nil
+    @live_updates = nil
+    @mark_read_url = nil
     forget_notifiers
   end
 end

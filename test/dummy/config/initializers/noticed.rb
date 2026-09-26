@@ -9,3 +9,8 @@ end
 Notey.notification_url = ->(notification) { "https://example.com/notifications/#{notification.id}" }
 
 Notey.mailer_sender = "notifications@example.com"
+
+if Rails.env.development?
+  Notey.live_updates = true
+  Notey.mark_read_url = ->(_notification) { "/inbox" }
+end

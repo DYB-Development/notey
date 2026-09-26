@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "turbo/broadcastable/test_helper"
 
 module Notey
   class InAppDeliveryTest < ActiveSupport::TestCase
     include ActiveJob::TestHelper
+    include Turbo::Broadcastable::TestHelper
 
     setup do
       Notey.reset!
@@ -24,6 +26,73 @@ module Notey
       perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
 
       assert_equal 1, Noticed::Notification.where(recipient: member).count
+    end
+
+    test "pushes the delivered notification to the recipient's stream when live updates are on" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+      end
+
+      assert pushed.any? { |stream| stream["action"] == "prepend" && stream["target"] == "notey_inbox" }
+    end
+
+    test "points a pushed row's Mark read at the url the host set" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/inbox/read" }
+      member = Member.create!(email: "person@example.com")
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+      end
+
+      assert_includes pushed.first.to_html, 'action="/inbox/read"'
+    end
+
+    test "pushes nothing when live updates are left off" do
+      member = Member.create!(email: "person@example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_no_turbo_stream_broadcasts LiveInbox.stream(member, 7)
+    end
+
+    test "pushes a notification with no account to nobody" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      Current.account_id = nil
+      member = Member.create!(email: "person@example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_no_turbo_stream_broadcasts LiveInbox.stream(member, nil).compact
+    end
+
+    test "pushes the recipient's new unread count with the delivered notification" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+      end
+
+      assert_includes pushed.map(&:to_html).join, '<span id="notey_unread_count">1</span>'
+    end
+
+    test "finishes the delivery when the push fails" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+
+      Turbo::StreamsChannel.stub(:broadcast_prepend_to, ->(*, **) { raise "the cable server is down" }) do
+        assert_nothing_raised do
+          perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+        end
+      end
     end
   end
 end

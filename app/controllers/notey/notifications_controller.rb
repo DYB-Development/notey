@@ -6,13 +6,12 @@ module Notey
 
     def index
       @notifications = inbox.includes(:event).order(created_at: :desc).limit(PER_PAGE)
-      @unread_count = inbox.unread.count
 
       Noticed::Notification.where(id: @notifications.map(&:id)).unseen.mark_as_seen
     end
 
     def update
-      inbox.find(params[:id]).mark_as_read!
+      MarkRead.new(person: Current.member, account: Current.account_id, values: { read: params[:id] }).call
 
       redirect_to notifications_path
     end

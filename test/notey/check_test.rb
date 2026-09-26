@@ -44,5 +44,30 @@ module Notey
     ensure
       Notey.mailer_sender = previous
     end
+
+    test "refuses to run live updates with no url for a pushed row's Mark read" do
+      Notey.live_updates = true
+
+      error = assert_raises(Notey::MissingMarkReadUrl) { Notey.check! }
+
+      assert_match(/mark_read_url/, error.message)
+    end
+
+    test "refuses to run live updates without Turbo loaded" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+
+      error = Notey.stub(:turbo_loaded?, false) do
+        assert_raises(Notey::MissingTurbo) { Notey.check! }
+      end
+
+      assert_match(/turbo-rails/, error.message)
+    end
+
+    test "runs without Turbo while live updates are left off" do
+      Notey.stub(:turbo_loaded?, false) do
+        assert_nothing_raised { Notey.check! }
+      end
+    end
   end
 end
