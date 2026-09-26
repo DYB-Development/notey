@@ -98,5 +98,14 @@ module Notey
 
       assert_select "turbo-cable-stream-source", 0
     end
+
+    test "gives each row an id a live update can replace it by" do
+      member = Member.create!(email: "person@example.com")
+      notification = notification_for(member)
+
+      draw(person: member)
+
+      assert_select "#notey_notification_#{notification.id}", 1
+    end
   end
 end
