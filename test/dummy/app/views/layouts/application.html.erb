@@ -20,6 +20,8 @@
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app %>
+    <%= action_cable_meta_tag %>
+    <%= javascript_include_tag "turbo.min", type: "module" %>
   </head>
 
   <body>
