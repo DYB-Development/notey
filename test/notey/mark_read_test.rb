@@ -68,5 +68,15 @@ module Notey
 
       assert_no_turbo_stream_broadcasts LiveInbox.stream(member, 8)
     end
+
+    test "pushes nothing when live updates are left off" do
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+      notification = notification_for(member)
+
+      MarkRead.new(person: member, account: 7, values: { read: notification.id }).call
+
+      assert_no_turbo_stream_broadcasts LiveInbox.stream(member, 7)
+    end
   end
 end
