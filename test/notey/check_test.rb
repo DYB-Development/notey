@@ -44,5 +44,13 @@ module Notey
     ensure
       Notey.mailer_sender = previous
     end
+
+    test "refuses to run live updates with no url for a pushed row's Mark read" do
+      Notey.live_updates = true
+
+      error = assert_raises(Notey::MissingMarkReadUrl) { Notey.check! }
+
+      assert_match(/mark_read_url/, error.message)
+    end
   end
 end

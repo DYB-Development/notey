@@ -21,6 +21,7 @@ module Notey
   class UnsendableChannel < StandardError; end
   class UnsendableAttempt < StandardError; end
   class MissingRetention < StandardError; end
+  class MissingMarkReadUrl < StandardError; end
 
   class << self
     attr_writer :notification_url, :mailer_sender
@@ -88,6 +89,7 @@ module Notey
   def self.check!
     registered_channels.each { |channel| check_channel!(channel) }
     check_sender!
+    check_live_updates! if live_updates
   end
 
   def self.check_channel!(channel)
@@ -115,6 +117,12 @@ module Notey
     return if mailer_sender.present?
 
     raise MissingSender, "notey sends digests by email and no mailer_sender is set"
+  end
+
+  def self.check_live_updates!
+    return if mark_read_url
+
+    raise MissingMarkReadUrl, "notey pushes rows with a Mark read button and no mark_read_url is set"
   end
 
   def self.sends(notification_type, on:, addressed: false, via: nil)
