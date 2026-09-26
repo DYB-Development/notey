@@ -44,5 +44,18 @@ module Notey
 
       assert pushed.any? { |stream| stream["action"] == "replace" && stream["target"] == "notey_notification_#{notification.id}" }
     end
+
+    test "pushes the lower unread count when a notification is read" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+      notification = notification_for(member)
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        MarkRead.new(person: member, account: 7, values: { read: notification.id }).call
+      end
+
+      assert_includes pushed.map(&:to_html).join, '<span id="notey_unread_count">0</span>'
+    end
   end
 end
