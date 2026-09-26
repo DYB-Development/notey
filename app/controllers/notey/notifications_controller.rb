@@ -6,7 +6,6 @@ module Notey
 
     def index
       @notifications = inbox.includes(:event).order(created_at: :desc).limit(PER_PAGE)
-      @unread_count = inbox.unread.count
 
       Noticed::Notification.where(id: @notifications.map(&:id)).unseen.mark_as_seen
     end

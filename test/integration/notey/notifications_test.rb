@@ -183,5 +183,14 @@ module Notey
       assert_select "turbo-cable-stream-source[signed-stream-name=?]",
         Turbo::StreamsChannel.signed_stream_name(LiveInbox.stream(member, "7"))
     end
+
+    test "shows the unread count where a live update can replace it" do
+      member = Member.create!(email: "person@example.com")
+      notify(member)
+
+      get "/notey/notifications", headers: headers_for(member)
+
+      assert_select "#notey_unread_count", text: "1"
+    end
   end
 end
