@@ -49,5 +49,13 @@ module Notey
 
       assert_includes pushed.first.to_html, 'action="/inbox/read"'
     end
+
+    test "pushes nothing when live updates are left off" do
+      member = Member.create!(email: "person@example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_no_turbo_stream_broadcasts LiveInbox.stream(member, 7)
+    end
   end
 end
