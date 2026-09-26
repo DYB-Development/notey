@@ -192,5 +192,14 @@ module Notey
 
       assert_select "#notey_unread_count", text: "1"
     end
+
+    test "lists the rows where a live update can add a new one" do
+      member = Member.create!(email: "person@example.com")
+      notify(member)
+
+      get "/notey/notifications", headers: headers_for(member)
+
+      assert_select "#notey_inbox #notey_notification_#{Noticed::Notification.last.id}", 1
+    end
   end
 end

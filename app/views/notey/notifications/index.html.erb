@@ -2,18 +2,10 @@
 
 <%= ui_page(max_width: :lg) do %>
   <%= ui_section(title: "Notifications", subtitle: safe_join([ render("notey/unread_count", person: Notey::Current.member, account: Notey::Current.account_id), " unread" ])) do %>
-    <% @notifications.each do |notification| %>
-      <%= ui_panel do %>
-        <div data-notification-id="<%= notification.id %>">
-          <%= notification.event.class.name %>
-          <%= ui_badge(label: notification.read? ? "Read" : "Unread") %>
-          <% unless notification.read? %>
-            <%= ui_form(action: notification_path(notification), method: :patch) do %>
-              <%= ui_button(label: "Mark read") %>
-            <% end %>
-          <% end %>
-        </div>
+    <div id="notey_inbox">
+      <% @notifications.each do |notification| %>
+        <%= render "notey/notification", notification: notification, submit_url: notification_path(notification) %>
       <% end %>
-    <% end %>
+    </div>
   <% end %>
 <% end %>
