@@ -63,5 +63,11 @@ module Notey
 
       assert_match(/turbo-rails/, error.message)
     end
+
+    test "runs without Turbo while live updates are left off" do
+      Notey.stub(:turbo_loaded?, false) do
+        assert_nothing_raised { Notey.check! }
+      end
+    end
   end
 end
