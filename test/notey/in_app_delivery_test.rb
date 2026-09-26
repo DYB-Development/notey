@@ -37,5 +37,17 @@ module Notey
 
       assert_turbo_stream_broadcasts LiveInbox.stream(member, 7), count: 1
     end
+
+    test "points a pushed row's Mark read at the url the host set" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/inbox/read" }
+      member = Member.create!(email: "person@example.com")
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+      end
+
+      assert_includes pushed.first.to_html, 'action="/inbox/read"'
+    end
   end
 end
