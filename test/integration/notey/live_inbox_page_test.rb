@@ -3,7 +3,7 @@
 require "test_helper"
 
 module Notey
-  class LiveInboxTest < ActionDispatch::IntegrationTest
+  class LiveInboxPageTest < ActionDispatch::IntegrationTest
     teardown { Notey.reset! }
 
     test "a host page shows the inbox subscribed to live updates with Turbo loaded" do
