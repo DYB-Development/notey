@@ -7,6 +7,8 @@ module Notey
     end
 
     def self.deliver(notification)
+      return if notification.account_id.blank?
+
       Turbo::StreamsChannel.broadcast_prepend_to(
         *stream(notification.recipient, notification.account_id),
         target: "notey_inbox",

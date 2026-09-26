@@ -57,5 +57,16 @@ module Notey
 
       assert_no_turbo_stream_broadcasts LiveInbox.stream(member, 7)
     end
+
+    test "pushes a notification with no account to nobody" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      Current.account_id = nil
+      member = Member.create!(email: "person@example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_no_turbo_stream_broadcasts LiveInbox.stream(member, nil).compact
+    end
   end
 end
