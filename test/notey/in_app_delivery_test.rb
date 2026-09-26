@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "turbo/broadcastable/test_helper"
 
 module Notey
   class InAppDeliveryTest < ActiveSupport::TestCase
     include ActiveJob::TestHelper
+    include Turbo::Broadcastable::TestHelper
 
     setup do
       Notey.reset!
@@ -24,6 +26,16 @@ module Notey
       perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
 
       assert_equal 1, Noticed::Notification.where(recipient: member).count
+    end
+
+    test "pushes the delivered notification to the recipient's stream when live updates are on" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+
+      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+
+      assert_turbo_stream_broadcasts LiveInbox.stream(member, 7), count: 1
     end
   end
 end

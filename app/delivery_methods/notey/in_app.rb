@@ -3,6 +3,7 @@
 module Notey
   class InApp < Noticed::DeliveryMethod
     def deliver
+      LiveInbox.deliver(notification) if Notey.live_updates
     end
 
     def outbound?

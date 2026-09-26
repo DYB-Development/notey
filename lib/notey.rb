@@ -24,7 +24,7 @@ module Notey
 
   class << self
     attr_writer :notification_url, :mailer_sender
-    attr_accessor :attempt_retention, :live_updates
+    attr_accessor :attempt_retention, :live_updates, :mark_read_url
   end
 
   def self.mailer_sender
@@ -132,6 +132,7 @@ module Notey
   def self.reset!
     @host_channels = nil
     @live_updates = nil
+    @mark_read_url = nil
     forget_notifiers
   end
 end
