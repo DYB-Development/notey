@@ -33,9 +33,11 @@ module Notey
       Notey.mark_read_url = ->(_notification) { "/notifications" }
       member = Member.create!(email: "person@example.com")
 
-      perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+      end
 
-      assert_turbo_stream_broadcasts LiveInbox.stream(member, 7), count: 1
+      assert pushed.any? { |stream| stream["action"] == "prepend" && stream["target"] == "notey_inbox" }
     end
 
     test "points a pushed row's Mark read at the url the host set" do
@@ -67,6 +69,18 @@ module Notey
       perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
 
       assert_no_turbo_stream_broadcasts LiveInbox.stream(member, nil).compact
+    end
+
+    test "pushes the recipient's new unread count with the delivered notification" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+      end
+
+      assert_includes pushed.map(&:to_html).join, '<span id="notey_unread_count">1</span>'
     end
   end
 end
