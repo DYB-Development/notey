@@ -2,17 +2,6 @@
 
 <%= turbo_stream_from(*Notey::LiveInbox.stream(person, account)) if Notey.live_updates && account.present? %>
 
-<% notifications.each do |notification| %>
-  <%= ui_panel do %>
-    <div data-notification-id="<%= notification.id %>">
-      <%= notification.event.title %>
-      <%= ui_badge(label: notification.read? ? "Read" : "Unread") %>
-      <% unless notification.read? %>
-        <%= ui_form(action: submit_url, method: :patch) do %>
-          <%= hidden_field_tag "read", notification.id, id: nil %>
-          <%= ui_button(label: "Mark read") %>
-        <% end %>
-      <% end %>
-    </div>
-  <% end %>
-<% end %>
+<div id="notey_inbox">
+  <%= render partial: "notey/notification", collection: notifications, locals: { submit_url: submit_url } %>
+</div>
