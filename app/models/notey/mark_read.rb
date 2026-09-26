@@ -9,15 +9,20 @@ module Notey
     end
 
     def call
-      notification&.mark_as_read!
+      mark(notification) if notification
 
       Kept.new
     end
 
     private
 
+    def mark(notification)
+      notification.mark_as_read!
+      LiveInbox.read(notification) if Notey.live_updates
+    end
+
     def notification
-      Inbox.for(@person, account_id: @account_id).find_by(id: @values[:read])
+      @notification ||= Inbox.for(@person, account_id: @account_id).find_by(id: @values[:read])
     end
   end
 end

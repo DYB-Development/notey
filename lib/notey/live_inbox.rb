@@ -12,6 +12,16 @@ module Notey
       Turbo::StreamsChannel.broadcast_prepend_to(
         *stream_of(notification), target: "notey_inbox", html: row(notification)
       )
+      push_unread_count(notification)
+    end
+
+    def self.read(notification)
+      Turbo::StreamsChannel.broadcast_replace_to(
+        *stream_of(notification), target: "notey_notification_#{notification.id}", html: row(notification)
+      )
+    end
+
+    def self.push_unread_count(notification)
       Turbo::StreamsChannel.broadcast_replace_to(
         *stream_of(notification), target: "notey_unread_count", html: unread_count(notification)
       )

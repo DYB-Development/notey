@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "turbo/broadcastable/test_helper"
 
 module Notey
   class MarkReadTest < ActiveSupport::TestCase
+    include Turbo::Broadcastable::TestHelper
+
     teardown { Notey.reset! }
 
     def notification_for(member, account_id: 7)
@@ -27,6 +30,19 @@ module Notey
       MarkRead.new(person: member, account: 7, values: { read: notification.id }).call
 
       assert_not notification.reload.read?
+    end
+
+    test "replaces the read row in the person's other open pages when live updates are on" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+      notification = notification_for(member)
+
+      pushed = capture_turbo_stream_broadcasts(LiveInbox.stream(member, 7)) do
+        MarkRead.new(person: member, account: 7, values: { read: notification.id }).call
+      end
+
+      assert pushed.any? { |stream| stream["action"] == "replace" && stream["target"] == "notey_notification_#{notification.id}" }
     end
   end
 end
