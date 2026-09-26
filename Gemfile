@@ -14,7 +14,7 @@ group :development, :test do
   gem "propshaft"
   gem "turbo-rails"
   gem "pry"
-  gem "minitest", "~> 5.0"
+  gem "minitest", "~> 6.0"
 
   gem "json", "< 3"
 
