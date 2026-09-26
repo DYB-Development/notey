@@ -81,5 +81,14 @@ module Notey
       assert_select "turbo-cable-stream-source[signed-stream-name=?]",
         Turbo::StreamsChannel.signed_stream_name(LiveInbox.stream(member, 7))
     end
+
+    test "subscribes the page to nothing when no account is given" do
+      Notey.live_updates = true
+      member = Member.create!(email: "person@example.com")
+
+      draw(person: member, account: nil)
+
+      assert_select "turbo-cable-stream-source", 0
+    end
   end
 end
