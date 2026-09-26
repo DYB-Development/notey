@@ -12,5 +12,11 @@ module Notey
 
       assert_not_equal LiveInbox.stream(first, 7), LiveInbox.stream(second, 7)
     end
+
+    test "gives one person a different stream in each account" do
+      member = Member.create!(email: "person@example.com")
+
+      assert_not_equal LiveInbox.stream(member, 7), LiveInbox.stream(member, 8)
+    end
   end
 end
