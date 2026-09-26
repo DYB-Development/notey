@@ -82,5 +82,17 @@ module Notey
 
       assert_includes pushed.map(&:to_html).join, '<span id="notey_unread_count">1</span>'
     end
+
+    test "finishes the delivery when the push fails" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+
+      Turbo::StreamsChannel.stub(:broadcast_prepend_to, ->(*, **) { raise "the cable server is down" }) do
+        assert_nothing_raised do
+          perform_enqueued_jobs { CommentNotification.notify(member, comment_id: 1) }
+        end
+      end
+    end
   end
 end

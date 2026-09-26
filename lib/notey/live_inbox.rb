@@ -9,10 +9,12 @@ module Notey
     def self.deliver(notification)
       return if notification.account_id.blank?
 
-      Turbo::StreamsChannel.broadcast_prepend_to(
-        *stream_of(notification), target: "notey_inbox", html: row(notification)
-      )
-      push_unread_count(notification)
+      pushing(notification) do
+        Turbo::StreamsChannel.broadcast_prepend_to(
+          *stream_of(notification), target: "notey_inbox", html: row(notification)
+        )
+        push_unread_count(notification)
+      end
     end
 
     def self.read(notification)
