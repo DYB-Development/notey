@@ -78,5 +78,18 @@ module Notey
 
       assert_no_turbo_stream_broadcasts LiveInbox.stream(member, 7)
     end
+
+    test "still marks the notification read when the push fails" do
+      Notey.live_updates = true
+      Notey.mark_read_url = ->(_notification) { "/notifications" }
+      member = Member.create!(email: "person@example.com")
+      notification = notification_for(member)
+
+      Turbo::StreamsChannel.stub(:broadcast_replace_to, ->(*, **) { raise "the cable server is down" }) do
+        MarkRead.new(person: member, account: 7, values: { read: notification.id }).call
+      end
+
+      assert_predicate notification.reload, :read?
+    end
   end
 end

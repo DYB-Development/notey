@@ -16,10 +16,18 @@ module Notey
     end
 
     def self.read(notification)
-      Turbo::StreamsChannel.broadcast_replace_to(
-        *stream_of(notification), target: "notey_notification_#{notification.id}", html: row(notification)
-      )
-      push_unread_count(notification)
+      pushing(notification) do
+        Turbo::StreamsChannel.broadcast_replace_to(
+          *stream_of(notification), target: "notey_notification_#{notification.id}", html: row(notification)
+        )
+        push_unread_count(notification)
+      end
+    end
+
+    def self.pushing(notification)
+      yield
+    rescue StandardError => error
+      Rails.logger.error("notey could not push notification #{notification.id}: #{error.message}")
     end
 
     def self.push_unread_count(notification)
