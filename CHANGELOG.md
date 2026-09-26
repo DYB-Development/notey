@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Nothing yet.
+
+## 0.5.0
+
 ### Added
 
 - Live updates, off until `Notey.live_updates` is set. A notification delivered
