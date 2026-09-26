@@ -1,0 +1,1 @@
+<%= turbo_stream_from(*Notey::LiveInbox.stream(person, account)) if Notey.live_updates && account.present? %>

@@ -1,6 +1,6 @@
 <% notifications = Notey::Inbox.for(person, account_id: account).includes(:event).order(created_at: :desc) %>
 
-<%= turbo_stream_from(*Notey::LiveInbox.stream(person, account)) if Notey.live_updates && account.present? %>
+<%= render "notey/live_stream", person: person, account: account %>
 
 <div id="notey_inbox">
   <%= render partial: "notey/notification", collection: notifications, locals: { submit_url: submit_url } %>

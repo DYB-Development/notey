@@ -1,3 +1,5 @@
+<%= render "notey/live_stream", person: Notey::Current.member, account: Notey::Current.account_id %>
+
 <%= ui_page(max_width: :lg) do %>
   <%= ui_section(title: "Notifications", subtitle: "#{@unread_count} unread") do %>
     <% @notifications.each do |notification| %>

@@ -173,5 +173,15 @@ module Notey
 
       assert pushed.any? { |stream| stream["target"] == "notey_notification_#{notification.id}" }
     end
+
+    test "subscribes the page to the person's stream when live updates are on" do
+      Notey.live_updates = true
+      member = Member.create!(email: "person@example.com")
+
+      get "/notey/notifications", headers: headers_for(member)
+
+      assert_select "turbo-cable-stream-source[signed-stream-name=?]",
+        Turbo::StreamsChannel.signed_stream_name(LiveInbox.stream(member, "7"))
+    end
   end
 end
