@@ -55,5 +55,6 @@ module Notey
         locals: { person: notification.recipient, account: notification.account_id }
       )
     end
+    private_class_method :pushing, :push_unread_count, :stream_of, :row, :unread_count
   end
 end
