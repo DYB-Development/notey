@@ -3,6 +3,7 @@ require "notey/engine"
 require "notey/channels"
 require "notey/destinations"
 require "notey/inbox"
+require "notey/live_inbox"
 require "notey/digest_run"
 require "notey/records_attempt"
 
