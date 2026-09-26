@@ -12,6 +12,7 @@ group :development, :test do
   gem "puma"
   gem "sqlite3"
   gem "propshaft"
+  gem "turbo-rails"
   gem "pry"
   gem "minitest", "~> 5.0"
 
