@@ -1,5 +1,7 @@
 <% notifications = Notey::Inbox.for(person, account_id: account).includes(:event).order(created_at: :desc) %>
 
+<%= turbo_stream_from person, :notey_inbox, account if Notey.live_updates %>
+
 <% notifications.each do |notification| %>
   <%= ui_panel do %>
     <div data-notification-id="<%= notification.id %>">

@@ -5,6 +5,7 @@ require "test_helper"
 module Notey
   class InboxPartialTest < ActionView::TestCase
     helper KeystoneUiHelper
+    helper Turbo::StreamsHelper
 
     teardown { Notey.reset! }
 
@@ -60,6 +61,15 @@ module Notey
       draw(person: member)
 
       assert_select "[data-notification-id]", text: /Read/
+    end
+
+    test "subscribes the page to live updates when the host turns them on" do
+      Notey.live_updates = true
+      member = Member.create!(email: "person@example.com")
+
+      draw(person: member)
+
+      assert_select "turbo-cable-stream-source", 1
     end
   end
 end
